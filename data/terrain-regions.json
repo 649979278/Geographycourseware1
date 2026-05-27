@@ -1,0 +1,213 @@
+[
+  {
+    "id": "qingzang-gaoyuan",
+    "name": "青藏高原",
+    "description": "世界海拔最高的高原，平均海拔4000米以上，被称为'世界屋脊'，是亚洲许多大河的发源地。",
+    "center": { "x": 818, "y": 1333 },
+    "boundary": [
+      { "x": 350, "y": 1000 }, { "x": 650, "y": 900 }, { "x": 1100, "y": 950 },
+      { "x": 1400, "y": 1100 }, { "x": 1450, "y": 1400 }, { "x": 1300, "y": 1700 },
+      { "x": 900, "y": 1750 }, { "x": 500, "y": 1650 }
+    ],
+    "labelPosition": { "x": 818, "y": 1333 },
+    "dropRadius": 100,
+    "altitude": "4000m+",
+    "surroundingMountains": ["himalaya", "kunlunshan", "tanggula", "hengduan"]
+  },
+  {
+    "id": "chaidamu",
+    "name": "柴达木盆地",
+    "description": "位于青藏高原东北部，有'聚宝盆'之称，是中国海拔最高的盆地。",
+    "center": { "x": 1010, "y": 969 },
+    "boundary": [
+      { "x": 850, "y": 850 }, { "x": 1150, "y": 850 },
+      { "x": 1150, "y": 1100 }, { "x": 850, "y": 1100 }
+    ],
+    "labelPosition": { "x": 1010, "y": 969 },
+    "dropRadius": 70,
+    "altitude": "2600-3000m",
+    "surroundingMountains": ["qilianshan", "kunlunshan"]
+  },
+  {
+    "id": "talimu",
+    "name": "塔里木盆地",
+    "description": "中国面积最大的内陆盆地，位于新疆南部，塔克拉玛干沙漠所在地。",
+    "center": { "x": 481, "y": 878 },
+    "boundary": [
+      { "x": 200, "y": 650 }, { "x": 750, "y": 650 },
+      { "x": 750, "y": 1150 }, { "x": 200, "y": 1150 }
+    ],
+    "labelPosition": { "x": 481, "y": 878 },
+    "dropRadius": 90,
+    "altitude": "800-1300m",
+    "surroundingMountains": ["tianshan", "kunlunshan"]
+  },
+  {
+    "id": "zhungeer",
+    "name": "准噶尔盆地",
+    "description": "位于新疆北部，中国第二大盆地，也是中国纬度最高的盆地。",
+    "center": { "x": 625, "y": 485 },
+    "boundary": [
+      { "x": 400, "y": 300 }, { "x": 850, "y": 300 },
+      { "x": 850, "y": 650 }, { "x": 400, "y": 650 }
+    ],
+    "labelPosition": { "x": 625, "y": 485 },
+    "dropRadius": 80,
+    "altitude": "500-1000m",
+    "surroundingMountains": ["altai", "tianshan"]
+  },
+  {
+    "id": "neimenggu",
+    "name": "内蒙古高原",
+    "description": "中国第二大高原，地势平坦开阔，东部草原辽阔，西部戈壁广布。",
+    "center": { "x": 1972, "y": 545 },
+    "boundary": [
+      { "x": 1500, "y": 250 }, { "x": 2450, "y": 250 },
+      { "x": 2450, "y": 850 }, { "x": 1500, "y": 850 }
+    ],
+    "labelPosition": { "x": 1972, "y": 545 },
+    "dropRadius": 100,
+    "altitude": "1000-1500m",
+    "surroundingMountains": ["daxinganling", "yinshan", "helanshan"]
+  },
+  {
+    "id": "huangtu",
+    "name": "黄土高原",
+    "description": "世界上黄土覆盖面积最大的高原，位于黄河中游，水土流失较为严重。",
+    "center": { "x": 1755, "y": 969 },
+    "boundary": [
+      { "x": 1450, "y": 750 }, { "x": 2050, "y": 750 },
+      { "x": 2050, "y": 1200 }, { "x": 1450, "y": 1200 }
+    ],
+    "labelPosition": { "x": 1755, "y": 969 },
+    "dropRadius": 90,
+    "altitude": "1000-2000m",
+    "surroundingMountains": ["taihangshan", "qinling", "qilianshan"]
+  },
+  {
+    "id": "sichuan",
+    "name": "四川盆地",
+    "description": "中国四大盆地之一，气候湿润，土壤肥沃，物产丰富，有'天府之国'美誉。",
+    "center": { "x": 1635, "y": 1454 },
+    "boundary": [
+      { "x": 1450, "y": 1300 }, { "x": 1850, "y": 1300 },
+      { "x": 1850, "y": 1600 }, { "x": 1450, "y": 1600 }
+    ],
+    "labelPosition": { "x": 1635, "y": 1454 },
+    "dropRadius": 80,
+    "altitude": "300-700m",
+    "surroundingMountains": ["qinling", "dabashan", "hengduan"]
+  },
+  {
+    "id": "yungui",
+    "name": "云贵高原",
+    "description": "地形崎岖，喀斯特地貌广布，多山间小盆地（坝子），气候垂直差异明显。",
+    "center": { "x": 1539, "y": 1697 },
+    "boundary": [
+      { "x": 1300, "y": 1500 }, { "x": 1800, "y": 1500 },
+      { "x": 1800, "y": 1900 }, { "x": 1300, "y": 1900 }
+    ],
+    "labelPosition": { "x": 1539, "y": 1697 },
+    "dropRadius": 85,
+    "altitude": "1000-2000m",
+    "surroundingMountains": ["hengduan"]
+  },
+  {
+    "id": "dongbei",
+    "name": "东北平原",
+    "description": "中国最大的平原，由三江平原、松嫩平原、辽河平原组成，黑土肥沃。",
+    "center": { "x": 2403, "y": 515 },
+    "boundary": [
+      { "x": 2100, "y": 300 }, { "x": 2700, "y": 300 },
+      { "x": 2700, "y": 750 }, { "x": 2100, "y": 750 }
+    ],
+    "labelPosition": { "x": 2403, "y": 515 },
+    "dropRadius": 90,
+    "altitude": "50-200m",
+    "surroundingMountains": ["daxinganling", "xiaoxinganling", "changbaishan"]
+  },
+  {
+    "id": "huabei",
+    "name": "华北平原",
+    "description": "中国第二大平原，由黄河、海河、淮河冲积而成，人口稠密。",
+    "center": { "x": 2116, "y": 969 },
+    "boundary": [
+      { "x": 1900, "y": 800 }, { "x": 2350, "y": 800 },
+      { "x": 2350, "y": 1150 }, { "x": 1900, "y": 1150 }
+    ],
+    "labelPosition": { "x": 2116, "y": 969 },
+    "dropRadius": 85,
+    "altitude": "50m以下",
+    "surroundingMountains": ["taihangshan", "yanshan"]
+  },
+  {
+    "id": "changjiang",
+    "name": "长江中下游平原",
+    "description": "地势低平，河网密布，湖泊众多，是中国著名的'鱼米之乡'。",
+    "center": { "x": 2068, "y": 1393 },
+    "boundary": [
+      { "x": 1800, "y": 1200 }, { "x": 2350, "y": 1200 },
+      { "x": 2350, "y": 1550 }, { "x": 1800, "y": 1550 }
+    ],
+    "labelPosition": { "x": 2068, "y": 1393 },
+    "dropRadius": 90,
+    "altitude": "50m以下",
+    "surroundingMountains": ["wushan", "dabieshan"]
+  },
+  {
+    "id": "liaodong",
+    "name": "辽东丘陵",
+    "description": "位于辽东半岛，地势起伏和缓，濒临渤海与黄海。",
+    "center": { "x": 2383, "y": 848 },
+    "boundary": [
+      { "x": 2250, "y": 750 }, { "x": 2500, "y": 750 },
+      { "x": 2500, "y": 950 }, { "x": 2250, "y": 950 }
+    ],
+    "labelPosition": { "x": 2383, "y": 848 },
+    "dropRadius": 60,
+    "altitude": "200-500m",
+    "surroundingMountains": ["changbaishan"]
+  },
+  {
+    "id": "shandong",
+    "name": "山东丘陵",
+    "description": "位于山东半岛，泰山为最高峰，濒临渤海与黄海。",
+    "center": { "x": 2211, "y": 1040 },
+    "boundary": [
+      { "x": 2100, "y": 950 }, { "x": 2350, "y": 950 },
+      { "x": 2350, "y": 1150 }, { "x": 2100, "y": 1150 }
+    ],
+    "labelPosition": { "x": 2211, "y": 1040 },
+    "dropRadius": 65,
+    "altitude": "200-800m",
+    "surroundingMountains": ["yanshan"]
+  },
+  {
+    "id": "dongnan",
+    "name": "东南丘陵",
+    "description": "包括江南丘陵、浙闽丘陵、两广丘陵，红壤广布，经济林木丰富。",
+    "center": { "x": 2140, "y": 1697 },
+    "boundary": [
+      { "x": 1900, "y": 1500 }, { "x": 2400, "y": 1500 },
+      { "x": 2400, "y": 1900 }, { "x": 1900, "y": 1900 }
+    ],
+    "labelPosition": { "x": 2140, "y": 1697 },
+    "dropRadius": 85,
+    "altitude": "200-500m",
+    "surroundingMountains": ["wuyishan", "nanling"]
+  },
+  {
+    "id": "hexizoulang",
+    "name": "河西走廊",
+    "description": "位于祁连山北麓，古代丝绸之路咽喉要道，绿洲农业发达。",
+    "center": { "x": 1251, "y": 908 },
+    "boundary": [
+      { "x": 1050, "y": 820 }, { "x": 1450, "y": 820 },
+      { "x": 1450, "y": 1000 }, { "x": 1050, "y": 1000 }
+    ],
+    "labelPosition": { "x": 1251, "y": 908 },
+    "dropRadius": 70,
+    "altitude": "1000-1500m",
+    "surroundingMountains": ["qilianshan", "helanshan"]
+  }
+]

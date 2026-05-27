@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国地理教学课件</title>
+    <link rel="stylesheet" href="css/base.css">
+    <style>
+        .home-container {
+            max-width: 900px;
+            margin: 60px auto;
+            text-align: center;
+        }
+
+        .home-title {
+            font-size: 42px;
+            color: #2c5f2d;
+            margin-bottom: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .home-subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 50px;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            padding: 0 20px;
+        }
+
+        .module-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid transparent;
+        }
+
+        .module-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+            border-color: #4caf50;
+        }
+
+        .module-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .module-card h3 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .module-card p {
+            font-size: 14px;
+            color: #777;
+            line-height: 1.5;
+        }
+
+        .module-card .badge {
+            margin-top: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-priority {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-soon {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="home-container">
+        <h1 class="home-title">中国地理教学课件</h1>
+        <p class="home-subtitle">拖拽互动 · 游戏练习 · 本地演示</p>
+
+        <div class="module-grid">
+            <a href="terrain.html" class="module-card">
+                <div class="module-icon" style="background:#e8f5e9;">⛰️</div>
+                <h3>中国的地形</h3>
+                <p>标注23座主要山脉与14个主要地形区，了解中国地势分布</p>
+                <span class="badge badge-priority">优先开发</span>
+            </a>
+
+            <a href="admin.html" class="module-card">
+                <div class="module-icon" style="background:#e3f2fd;">🗺️</div>
+                <h3>疆域与行政区划</h3>
+                <p>拖拽匹配省名、省会与简称，掌握34个省级行政区</p>
+                <span class="badge badge-soon">即将推出</span>
+            </a>
+
+            <a href="climate.html" class="module-card">
+                <div class="module-icon" style="background:#fff3e0;">☀️</div>
+                <h3>中国的气候</h3>
+                <p>气候类型分布、季风区分界、等温线与降水分布</p>
+                <span class="badge badge-soon">即将推出</span>
+            </a>
+
+            <a href="rivers.html" class="module-card">
+                <div class="module-icon" style="background:#e0f7fa;">🌊</div>
+                <h3>河流和湖泊</h3>
+                <p>标注主要河流湖泊，了解流经省市与地形区</p>
+                <span class="badge badge-soon">即将推出</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

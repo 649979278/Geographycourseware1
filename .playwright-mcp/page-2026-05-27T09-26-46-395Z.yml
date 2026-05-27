@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+  - heading "中国地理教学课件" [level=1] [ref=e3]
+  - paragraph [ref=e4]: 拖拽互动 · 游戏练习 · 本地演示
+  - generic [ref=e5]:
+    - link "⛰️ 中国的地形 标注23座主要山脉与14个主要地形区，了解中国地势分布 优先开发" [ref=e6] [cursor=pointer]:
+      - /url: terrain.html
+      - generic [ref=e7]: ⛰️
+      - heading "中国的地形" [level=3] [ref=e8]
+      - paragraph [ref=e9]: 标注23座主要山脉与14个主要地形区，了解中国地势分布
+      - generic [ref=e10]: 优先开发
+    - link "🗺️ 疆域与行政区划 拖拽匹配省名、省会与简称，掌握34个省级行政区 即将推出" [ref=e11] [cursor=pointer]:
+      - /url: admin.html
+      - generic [ref=e12]: 🗺️
+      - heading "疆域与行政区划" [level=3] [ref=e13]
+      - paragraph [ref=e14]: 拖拽匹配省名、省会与简称，掌握34个省级行政区
+      - generic [ref=e15]: 即将推出
+    - link "☀️ 中国的气候 气候类型分布、季风区分界、等温线与降水分布 即将推出" [ref=e16] [cursor=pointer]:
+      - /url: climate.html
+      - generic [ref=e17]: ☀️
+      - heading "中国的气候" [level=3] [ref=e18]
+      - paragraph [ref=e19]: 气候类型分布、季风区分界、等温线与降水分布
+      - generic [ref=e20]: 即将推出
+    - link "🌊 河流和湖泊 标注主要河流湖泊，了解流经省市与地形区 即将推出" [ref=e21] [cursor=pointer]:
+      - /url: rivers.html
+      - generic [ref=e22]: 🌊
+      - heading "河流和湖泊" [level=3] [ref=e23]
+      - paragraph [ref=e24]: 标注主要河流湖泊，了解流经省市与地形区
+      - generic [ref=e25]: 即将推出

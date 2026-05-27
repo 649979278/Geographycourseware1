@@ -1,0 +1,430 @@
+/* ============================================================
+   游戏 UI 组件样式
+   ============================================================ */
+
+/* 游戏状态栏（得分、计时、模式切换） */
+.game-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 20px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.status-item .label {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+}
+
+.status-item .value {
+    color: var(--color-primary);
+    font-size: 18px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.status-item.timer .value {
+    color: var(--color-accent);
+    font-family: 'Courier New', monospace;
+}
+
+/* 模式切换按钮组 */
+.mode-switch {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.mode-switch button {
+    padding: 6px 16px;
+    border: none;
+    background: #f5f5f5;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.mode-switch button.active {
+    background: var(--color-primary-light);
+    color: #fff;
+}
+
+.mode-switch button:hover:not(.active) {
+    background: #e8e8e8;
+}
+
+/* 进度条 */
+.progress-bar-container {
+    width: 140px;
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary));
+    border-radius: 5px;
+    transition: width 0.4s ease;
+}
+
+/* 关卡结果弹窗 */
+.result-stars {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 16px 0;
+    font-size: 40px;
+}
+
+.result-star {
+    opacity: 0.3;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.result-star.earned {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.result-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.result-stat {
+    background: #f5f5f5;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.result-stat .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.result-stat .stat-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+}
+
+/* 双人 PK 分屏布局 */
+.pk-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.pk-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid var(--color-border);
+    transition: background 0.3s ease;
+}
+
+.pk-panel:last-child {
+    border-right: none;
+}
+
+.pk-panel.active-turn {
+    background: rgba(76, 175, 80, 0.06);
+    box-shadow: inset 0 0 0 3px var(--color-primary-light);
+}
+
+.pk-panel-header {
+    padding: 10px 16px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pk-panel-header .player-name {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.pk-panel-header .player-score {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+/* PK 中缩小地图 */
+.pk-panel .map-container {
+    flex: 1;
+}
+
+.pk-panel .sidebar {
+    width: 160px;
+}
+
+.pk-vs-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    padding: 8px 16px;
+    border-radius: 20px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* 提示按钮 */
+.hint-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #fff3e0;
+    color: var(--color-accent);
+    border: 1px solid #ffe0b2;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hint-btn:hover {
+    background: #ffe0b2;
+}
+
+.hint-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* 开始游戏覆盖层 */
+.game-start-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(245, 247, 240, 0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    gap: 20px;
+}
+
+.game-start-overlay h2 {
+    font-size: 28px;
+    color: var(--color-primary);
+}
+
+.game-start-overlay p {
+    color: var(--color-text-secondary);
+    font-size: 15px;
+}
+
+/* 关卡选择卡片 */
+.level-select {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.level-card {
+    background: #fff;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    min-width: 200px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.level-card:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.level-card.active {
+    border-color: var(--color-primary);
+    background: #f1f8e9;
+    box-shadow: 0 4px 12px rgba(76,175,80,0.15);
+}
+
+.level-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.level-card-desc {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+}
+
+/* 浮动反馈徽章 */
+.feedback-badge {
+    position: absolute;
+    pointer-events: none;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    animation: floatUp 1s ease forwards;
+    z-index: 1000;
+}
+
+.feedback-badge.correct {
+    background: var(--color-success);
+    color: #fff;
+}
+
+.feedback-badge.wrong {
+    background: var(--color-error);
+    color: #fff;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-40px) scale(1.1);
+    }
+}
+
+/* 编辑模式面板 */
+.editor-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    padding: 16px;
+    z-index: 1500;
+    border: 2px solid var(--color-accent);
+}
+
+.editor-panel h3 {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-form-row {
+    margin-bottom: 10px;
+}
+
+.editor-form-row label {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+}
+
+.editor-form-row input,
+.editor-form-row textarea,
+.editor-form-row select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: var(--font-family);
+}
+
+.editor-form-row textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.editor-actions .btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 13px;
+}
+
+.editor-point-list {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-top: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 12px;
+}
+
+.editor-point-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+.editor-point-item:nth-child(odd) {
+    background: #f8f8f8;
+}
+
+.editor-point-item button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.editor-point-item .btn-edit {
+    color: var(--color-accent-blue);
+}
+
+.editor-point-item .btn-edit:hover {
+    background: #e3f2fd;
+}
+
+.editor-point-item .btn-delete {
+    color: var(--color-error);
+}
+
+.editor-point-item .btn-delete:hover {
+    background: #ffebee;
+}

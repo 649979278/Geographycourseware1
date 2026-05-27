@@ -1,0 +1,2 @@
+[   28512ms] TypeError: state.mapEngine.addEditorDropZone is not a function
+    at SVGSVGElement.<anonymous> (http://127.0.0.1:18080/terrain.html?editor=1:926:37)
