@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="css/game.css">
 </head>
 <body class="map-page">
-    <a class="home-link" href="index.html">← 返回首页</a>
 
     <!-- 顶部工具栏：图层开关 -->
     <div class="map-toolbar" id="toolbar">
+        <a class="home-link" href="index.html">← 返回首页</a>
         <span class="toolbar-title">中国的地形</span>
         <label class="layer-toggle active" data-layer="base">
             <input type="checkbox" checked> 底图
@@ -314,7 +314,7 @@
             state.mode = 'single';
             els.editorPanel.style.display = 'none';
             els.statusBar.style.display = 'flex';
-            els.sidebar.style.display = '';
+            els.sidebar.style.display = 'none';
             els.toolbar.querySelector('#editorBtn').style.display = '';
 
             bindModeSwitch();
@@ -413,14 +413,23 @@
             const levelConfig = state.gameConfig.terrain.levels.find(l => l.id === levelId);
             els.levelName.textContent = levelConfig ? levelConfig.name : (levelId === 'mountains' ? '山脉标注' : '地形区标注');
 
-            // 加载数据
-            const dataFile = levelId === 'mountains' ? 'data/mountains.json' : 'data/terrain-regions.json';
+            // 严格使用本地采集数据（与坐标采集模块共用同一份 localStorage）
+            const storageKey = levelId === 'mountains' ? STORAGE_KEYS.mountains : STORAGE_KEYS.regions;
+            let data = [];
+            let stored = null;
             try {
-                state.items = await loadJSON(dataFile);
+                stored = localStorage.getItem(storageKey);
+                if (stored) data = JSON.parse(stored);
             } catch (e) {
-                // 如果数据文件不存在，使用内置示例数据
-                console.warn('数据文件未找到，使用示例数据:', dataFile);
-                state.items = getSampleData(levelId);
+                console.warn('本地采集数据解析失败', e);
+            }
+            console.log('[setupLevel] levelId=', levelId, 'key=', storageKey, 'stored=', stored, 'data.length=', data.length);
+
+            if (Array.isArray(data) && data.length > 0) {
+                state.items = data;
+            } else {
+                // 未采集时保持空列表，开始挑战会给出提示
+                state.items = [];
             }
 
             // 重置状态
@@ -450,9 +459,10 @@
             // 生成侧边栏标签
             renderLabels();
 
-            // 显示开始覆盖层
+            // 显示开始覆盖层，待标注栏在挑战开始前保持隐藏
             els.startOverlay.style.display = '';
             document.getElementById('startTitle').textContent = els.levelName.textContent + '挑战';
+            els.sidebar.style.display = 'none';
         }
 
         function getSampleData(levelId) {
@@ -504,12 +514,82 @@
         }
 
         // ============================================================
+        // 本地存储（坐标采集数据持久化）
+        // ============================================================
+
+        const STORAGE_KEYS = {
+            mountains: 'geo_editor_mountains',
+            regions: 'geo_editor_regions'
+        };
+
+        /** 从 localStorage 加载采集数据 */
+        function loadEditorStorage() {
+            try {
+                const rawMountains = localStorage.getItem(STORAGE_KEYS.mountains);
+                const rawRegions = localStorage.getItem(STORAGE_KEYS.regions);
+                console.log('[loadEditorStorage] raw keys:', STORAGE_KEYS.mountains, rawMountains, STORAGE_KEYS.regions, rawRegions);
+                const mountains = JSON.parse(rawMountains || '[]');
+                const regions = JSON.parse(rawRegions || '[]');
+                state.editorItems = [
+                    ...mountains.map(d => ({ type: 'mountain', data: d })),
+                    ...regions.map(d => ({ type: 'region', data: d }))
+                ];
+                console.log('[loadEditorStorage] parsed:', state.editorItems.length, 'items');
+            } catch (e) {
+                console.warn('加载本地采集数据失败', e);
+                state.editorItems = [];
+            }
+        }
+
+        /** 保存采集数据到 localStorage */
+        function saveEditorStorage() {
+            try {
+                const mountains = state.editorItems.filter(i => i.type === 'mountain').map(i => i.data);
+                const regions = state.editorItems.filter(i => i.type === 'region').map(i => i.data);
+                localStorage.setItem(STORAGE_KEYS.mountains, JSON.stringify(mountains));
+                localStorage.setItem(STORAGE_KEYS.regions, JSON.stringify(regions));
+                console.log('[saveEditorStorage] saved:', STORAGE_KEYS.mountains, mountains.length, STORAGE_KEYS.regions, regions.length);
+            } catch (e) {
+                console.warn('保存采集数据失败', e);
+                showToast('保存失败：浏览器可能禁用了本地存储，请检查隐私模式设置', 'error', 4000);
+            }
+        }
+
+        /** 将编辑器数据同步到左侧待标注栏 */
+        function syncEditorToSidebar() {
+            state.items = state.editorItems.map(w => ({ ...w.data }));
+            state.placedIds.clear();
+
+            // 清空地图旧标记
+            state.mapEngine.layers.mountains.innerHTML = '';
+            state.mapEngine.layers.regions.innerHTML = '';
+            state.mapEngine.clearDropZones();
+
+            state.items.forEach(item => {
+                if (item.point) {
+                    state.mapEngine.addMountainMarker(item, showDescription);
+                } else if (item.center) {
+                    state.mapEngine.addRegionBoundary(item, showDescription);
+                }
+                state.mapEngine.addDropZone(item, item.point ? 'mountain' : 'region');
+            });
+
+            renderLabels();
+            updateCounts();
+        }
+
+        // ============================================================
         // 游戏流程控制
         // ============================================================
 
         function startGame() {
+            if (state.items.length === 0) {
+                showToast('暂无采集数据，请先进入“坐标采集”模块添加数据后再挑战', 'info', 3000);
+                return;
+            }
             state.isPlaying = true;
             els.startOverlay.style.display = 'none';
+            els.sidebar.style.display = '';
             if (state.pk.active) {
                 startPkGame();
             } else {
@@ -658,7 +738,7 @@
         }
 
         function onPointerDown(e) {
-            if (!state.isPlaying) return;
+            if (!state.isPlaying && state.mode !== 'editor') return;
             const label = e.target.closest('.drag-label');
             if (!label || label.classList.contains('placed')) return;
 
@@ -721,8 +801,10 @@
 
             // 转换为 SVG 坐标
             const svgPos = state.mapEngine.screenToSvg(clientX, clientY);
-            const targetPos = state.level === 'mountains' ? item.point : item.center;
+            const targetPos = item.point || item.center;
             const dropRadius = item.dropRadius || 50;
+
+            if (!targetPos) return;
 
             // 计算距离
             const dx = svgPos.x - targetPos.x;
@@ -739,6 +821,48 @@
         }
 
         function handleCorrect(item, labelEl, targetPos) {
+            if (state.mode === 'editor') {
+                // 采集模式：仅做视觉反馈，方便验证坐标精度，不计分
+                labelEl.classList.add('placed');
+                labelEl.classList.remove('dragging');
+                state.mapEngine.setItemVisible(item.id, true);
+
+                const ctm = els.mapSvg.getScreenCTM();
+                const svgPt = els.mapSvg.createSVGPoint();
+                svgPt.x = targetPos.x;
+                svgPt.y = targetPos.y;
+                const screenPt = svgPt.matrixTransform(ctm);
+
+                const flyEl = document.createElement('div');
+                flyEl.className = 'drag-label placed pulse-success';
+                flyEl.textContent = item.name;
+                flyEl.style.position = 'fixed';
+                const labelRect = labelEl.getBoundingClientRect();
+                flyEl.style.left = labelRect.left + 'px';
+                flyEl.style.top = labelRect.top + 'px';
+                flyEl.style.width = labelRect.width + 'px';
+                flyEl.style.zIndex = 1500;
+                flyEl.style.transition = 'all 0.5s cubic-bezier(0.2, 1, 0.3, 1)';
+                document.body.appendChild(flyEl);
+                requestAnimationFrame(() => {
+                    flyEl.style.left = screenPt.x + 'px';
+                    flyEl.style.top = screenPt.y + 'px';
+                    flyEl.style.transform = 'scale(0.8)';
+                    flyEl.style.opacity = '0';
+                });
+                setTimeout(() => flyEl.remove(), 500);
+
+                showFeedbackBadge(screenPt.x, screenPt.y, '正确', 'correct');
+                showToast('放置正确', 'success');
+
+                // 2秒后重置标签状态，方便反复测试
+                setTimeout(() => {
+                    labelEl.classList.remove('placed');
+                    state.mapEngine.setItemVisible(item.id, false);
+                }, 2000);
+                return;
+            }
+
             state.placedIds.add(item.id);
             state.correctCount++;
             const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
@@ -809,6 +933,13 @@
         }
 
         function handleWrong(labelEl) {
+            if (state.mode === 'editor') {
+                labelEl.classList.add('shake');
+                setTimeout(() => labelEl.classList.remove('shake'), 400);
+                showToast('位置不对，再试一次', 'error');
+                return;
+            }
+
             state.wrongCount++;
 
             // 标签抖动
@@ -884,20 +1015,26 @@
             state.mode = 'editor';
             els.editorPanel.style.display = '';
             els.statusBar.style.display = 'none';
-            els.sidebar.style.display = 'none';
+            els.sidebar.style.display = ''; // 显示待标注栏，实时同步采集点
             els.startOverlay.style.display = 'none';
 
-            // 隐藏模式切换中的游戏按钮
             els.modeSwitch.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             document.getElementById('editorBtn').classList.add('active');
 
             // 显示所有图层方便采集
             state.layerManager.setStates({ base: true, grid: true, mountains: false, regions: false, dropZones: false, editor: true });
 
-            // 刷新已有采集点的视觉标记和预览圈
+            // 加载已保存的采集点并同步到待标注栏
+            loadEditorStorage();
             refreshEditorVisuals();
-
+            renderEditorList();
+            syncEditorToSidebar();
+            setupDragAndDrop();
             bindEditorEvents();
+
+            // 隐藏已自动化的加载测试按钮
+            const editorTestBtn = document.getElementById('editorTestBtn');
+            if (editorTestBtn) editorTestBtn.style.display = 'none';
         }
 
         function bindEditorEvents() {
@@ -990,20 +1127,12 @@
                 editorCoords.value = '';
                 cancelEditorEdit();
                 renderEditorList();
+                syncEditorToSidebar();
             });
 
             // 完成边界按钮
             editorFinishBoundaryBtn.addEventListener('click', () => {
                 editorAddBtn.click();
-            });
-
-            // 加载测试：将编辑器采集点加载到游戏待标注列表
-            editorTestBtn.addEventListener('click', () => {
-                if (state.editorItems.length === 0) {
-                    alert('请先添加采集点');
-                    return;
-                }
-                loadEditorItemsToGame();
             });
 
             // 清空全部
@@ -1012,8 +1141,10 @@
                 state.editorItems = [];
                 state.editorBoundaryPoints = [];
                 state.mapEngine.clearEditorMarkers();
+                saveEditorStorage();
                 cancelEditorEdit();
                 renderEditorList();
+                syncEditorToSidebar();
             });
 
             // 导出 JSON
@@ -1043,6 +1174,7 @@
             } else {
                 state.editorItems.push({ type, data: item });
             }
+            saveEditorStorage();
         }
 
         /** 进入编辑某项的状态 */
@@ -1173,8 +1305,10 @@
                 btn.addEventListener('click', () => {
                     const idx = parseInt(btn.dataset.idx);
                     state.editorItems.splice(idx, 1);
+                    saveEditorStorage();
                     refreshEditorVisuals();
                     renderEditorList();
+                    syncEditorToSidebar();
                     if (state.editorEditingIdx === idx) cancelEditorEdit();
                     else if (state.editorEditingIdx > idx) state.editorEditingIdx--;
                 });

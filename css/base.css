@@ -98,8 +98,7 @@ html, body {
     font-size: 14px;
     font-weight: 600;
     transition: box-shadow 0.2s ease;
-    margin: 10px 20px 0;
-    align-self: flex-start;
+    flex-shrink: 0;
 }
 
 .home-link:hover {
