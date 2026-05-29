@@ -1,194 +1,133 @@
-# 中国地理教学课件开发计划
+# 中国的地形 — 一期代码落地计划
 
 ## Context
 
-用户需要开发一个用于日常教学的中国地理课件，在本地通过 `file://` 协议演示。项目目录 `D:\Geography courseware1` 下已有需求文档和 6 张底图资源，无现有代码，从零开始。初级目标是优先完成"中国的地形"模块（23座山脉 + 14个地形区），最终扩展为包含疆域/行政区划、气候、河流湖泊的完整课件，并带单人练习和双人PK游戏模式。
+根据需求文档，当前 terrain.html 已实现游戏框架、编辑器、叠加图层校准等基础能力，但以下代码层面功能尚未实现：
 
-## 现有资源关键问题分析
+1. **答案固定后点击查看描述不可用**：`addAnswerMarker` 无点击事件，且 `.answers-layer` 设置了 `pointer-events: none`
+2. **答案固定后地形区虚线圈定缺失**：`.region-answer` 为实线，需求要求虚线
+3. **地形起伏视觉效果缺失**：需求要求"最好能呈现出与地形对应的起伏的感觉"
 
-### 1. 图片分辨率严重不匹配
-- `01.中国山脉空白地图.jpg`: 954×698, 96 DPI
-- `02.和01完全匹配的经纬网.jpg`: 2909×2122, 300 DPI
-- 两者像素比约 **3.05:1**，无法直接叠加。名称中"完全匹配"指地理内容对齐，而非像素尺寸。
-- `0102叠加好的图.jpg`: 2981×2180, 300 DPI, **CMYK 4通道**。它是唯一已对齐的高清底图，但 CMYK 在某些浏览器中可能出现色彩偏差。
-- `完整中国政区轮廓.jpg`: 3092×2365, 300 DPI，质量最好。
+数据补充（山脉/地形区坐标和 description）由用户后续手工维护，不在本计划范围内。
 
-### 2. SVG 叠加 JPG 是否会导致无法重叠？
-**结论：不会导致无法重叠，但精度受限。**
-- SVG `<image>` 嵌入 JPG 完全可行，`viewBox` + `preserveAspectRatio` 可保证对齐。
-- 但如果以低分辨率图（如 954×698）为底图，山脉在图上可能只有几个像素宽，标注精度非常粗糙。
-- **建议**：地形模块使用 `0102叠加好的图.jpg`（2981×2180）作为底图；行政区划模块使用 `完整中国政区轮廓.jpg`。
+---
 
-### 3. 是否无法精确控制热点区域交互？
-**结论：可以控制，但需要手动定义交互区域。**
-- JPG 是光栅图，没有内置矢量边界。要实现"点击某山脉/某地形区显示描述"，必须在 SVG 中单独定义 `<path>` 或 `<circle>` 交互区。
-- 34个省级行政区 + 23座山脉 + 14个地形区 + 河流湖泊，全部精确描点工作量巨大。
-- **折中方案**：教学场景不需要测绘级精度。
-  - 山脉：一个中心标记点 `(x,y)` + 描述文本。
-  - 地形区：中心点 + 简化边界多边形（8~15个顶点）+ 虚线 SVG path 显示大致范围。
-  - 政区：省会位置 + 简化的省份边界或矩形 dropZone。
+## 一、答案固定后点击查看描述
 
-### 4. 坐标数据从哪来？
-这是项目落地的最大难点。手工录入几十个地理要素的像素坐标不现实。
-- **解决方案**：开发一个内置的"坐标采集模式"（开发辅助工具）。在浏览器中打开底图，点击山脉/地形区位置即可自动生成 JSON 坐标数据。
+### 问题
 
-## 推荐技术方案
+- `svg-map.js` 的 `addAnswerMarker(item)` 不接收 `onClick` 参数，不绑定点击事件
+- `addAnswerLine(item)` 和 `addAnswerRegion(item)` 同样缺少
+- `map.css` 的 `.answers-layer` 设置了 `pointer-events: none`，阻止鼠标交互
 
-### 整体架构
-- **前端**：HTML5 + Vanilla JavaScript (ES6+) + CSS3，无构建工具，确保 `file://` 协议稳定运行。
-- **地图渲染**：SVG 叠加 JPG 底图。
-  - 底图用 SVG `<image>` 嵌入高清 JPG。
-  - 经纬网**不用图片**，用 SVG 原生 `<line>` 绘制（独立图层、无限缩放清晰、可单独显隐）。
-  - 山脉标记、地形区边界、河流路径等用 SVG `<g>` 分层管理。
-- **拖拽交互**：原生 HTML5 Drag and Drop + Pointer Events（同时支持鼠标和触摸）。
-- **数据存储**：JSON 文件，所有地理要素坐标和描述本地持久化。
+### 修改方案
 
-### 目录结构
+**文件：`js/core/svg-map.js`**
 
-```
-D:\Geography courseware1\
-├── index.html                    # 入口页面，四大模块导航
-├── terrain.html                  # 地形模块（优先开发）
-├── admin.html                    # 行政区划模块
-├── climate.html                  # 气候模块
-├── rivers.html                   # 河流湖泊模块
-├── css/
-│   ├── base.css                  # 全局样式：教学风格，大字体，高对比度
-│   ├── map.css                   # 地图容器、SVG 样式、图层显隐
-│   └── game.css                  # 游戏 UI：得分板、计时器、标签栏、弹窗
-├── js/
-│   ├── core/
-│   │   ├── svg-map.js            # SVG 地图引擎：底图加载、viewBox 适配、坐标转换
-│   │   ├── layers.js             # 图层管理器：控制各 <g> 的显示/隐藏
-│   │   ├── drag-game.js          # 拖拽游戏引擎：标签拖拽、落点判定、吸附动画
-│   │   ├── game-ui.js            # 游戏界面控制：得分、计时、提示、关卡切换
-│   │   └── data-editor.js        # 坐标采集工具（dev 模式）：点击地图输出 JSON
-│   ├── modules/
-│   │   └── terrain.js            # 地形模块控制器（优先）
-│   └── utils/
-│       └── helpers.js            # DOM 辅助、防抖节流、动画工具
-├── data/
-│   ├── mountains.json            # 山脉数据：id, name, description, point{x,y}, labelPos, dropRadius
-│   ├── terrain-regions.json      # 地形区数据：id, name, description, center{x,y}, boundary[points], labelPos
-│   └── game-config.json          # 关卡配置、计分规则、双人 PK 参数
-└── assets/
-    └── maps/
-        ├── terrain-base.jpg      # 0102叠加好的图.jpg（或转 RGB 后的版本）
-        └── admin-base.jpg        # 完整中国政区轮廓.jpg
+1. `addAnswerMarker(item)` → `addAnswerMarker(item, onClick)`
+   - 在创建的 `<g>` 上绑定 `click` 事件调用 `onClick(item)`
+   - 设置 `g.style.cursor = 'pointer'`
+
+2. `addAnswerLine(item)` → `addAnswerLine(item, onClick)`
+   - 同上
+
+3. `addAnswerRegion(item)` → `addAnswerRegion(item, onClick)`
+   - 同上
+
+**文件：`terrain.html`**
+
+修改 `handleCorrect()` 中3处调用，传入 `showDescription`：
+
+```javascript
+state.mapEngine.addAnswerMarker(answerItem, showDescription);
+state.mapEngine.addAnswerLine(answerItem, showDescription);
+state.mapEngine.addAnswerRegion(answerItem, showDescription);
 ```
 
-### 关键设计决策
+**文件：`css/map.css`**
 
-1. **底图处理**
-   - 地形模块：以 `0102叠加好的图.jpg`（2981×2180）为底图。如果 CMYK 在某些浏览器渲染异常，先用画图工具转存为 RGB JPG（无质量损失）。
-   - 经纬网独立绘制：不叠加 02.jpg，而是用 JS 根据底图尺寸绘制经纬线 `<g id="grid-layer">`，间距可配置（如每 5° 一条），样式清晰，可独立开关。
-   - viewBox 与底图像素 1:1 对应，确保 JSON 中的坐标直接可用。
-
-2. **坐标系统**
-   - 以底图左上角为原点 `(0,0)`，像素坐标直接存入 JSON。
-   - 拖拽判定时，将鼠标/触摸事件的屏幕坐标通过 `getScreenCTM().inverse()` 转换为 SVG 内部坐标，再与目标点计算距离。
-
-3. **山脉标注交互**
-   - 左侧标签栏列出所有山脉名称（可拖拽的 HTML DOM 元素）。
-   - 地图上的山脉目标是一个隐藏的 `<circle>`（或显示为极淡的标记，开启"提示"后高亮）。
-   - 拖拽释放时计算与最近目标点的距离，小于 `dropRadius`（如 40px）则判定成功，标签吸附到该位置并变为绿色。
-   - 点击已放置的山脉标签（或地图上的标记）弹出描述框（HTML modal）。
-
-4. **地形区范围圈定**
-   - 每个地形区用 SVG `<polygon>` 或 `<path>` 定义简化边界（8~15个顶点），`stroke-dasharray` 设为虚线。
-   - 平时隐藏，点击"显示范围"按钮后整体显示；或点击具体地形区后高亮其边界。
-   - 地形区标注拖拽的逻辑与山脉相同，但 dropZone 可设为区域中心点或边界框。
-
-5. **游戏模式**
-   - **单人练习模式**：选择关卡（山脉/地形区）→ 计时开始 → 从左侧标签栏拖拽到地图 → 实时计分（正确+10，错误-5，使用提示-3）→ 全部完成后显示用时、准确率、星级。
-   - **双人 PK 模式**：同机轮流。界面左右（或上下）分屏，每人轮到自己时高亮。轮流从标签池中选择并拖拽答题，答对继续，答错换对手。先完成者或时间到后分高者胜。
-   - **图层开关**：顶部工具栏提供复选框：底图 / 经纬网 / 山脉标记 / 地形区边界 / 省会标记，可任意组合显隐。
-
-6. **UI 风格（教学风格 + 游戏元素）**
-   - 整体色调：浅米色/浅绿色背景（护眼），重要按钮用明快的橙色/蓝色。
-   - 字体：中文无衬线字体（如系统默认的微软雅黑），字号偏大（16px+）。
-   - 游戏元素：
-     - 正确反馈：绿色脉冲动画 + "答对了！"徽章。
-     - 错误反馈：标签抖动后弹回侧边栏。
-     - 进度条：显示当前关卡完成百分比。
-     - 星级评价：根据用时和错误率评定 1~3 星。
-
-### JSON 数据结构示例
-
-**`data/mountains.json`**
-```json
-[
-  {
-    "id": "daxinganling",
-    "name": "大兴安岭",
-    "description": "东北平原与内蒙古高原的分界线，地势西高东低...",
-    "point": { "x": 2100, "y": 680 },
-    "labelPosition": { "x": 2100, "y": 650 },
-    "dropRadius": 50,
-    "relatedTerrain": ["neimenggu-gaoyuan", "dongbei-pingyuan"]
-  }
-]
+```css
+.answers-layer {
+    pointer-events: none;  /* 容器层不拦截 */
+}
+.answer-item {
+    pointer-events: auto;  /* 每个答案项可点击 */
+    cursor: pointer;
+}
 ```
 
-**`data/terrain-regions.json`**
-```json
-[
-  {
-    "id": "qingzang-gaoyuan",
-    "name": "青藏高原",
-    "description": "世界海拔最高的高原，平均海拔4000米以上，被称为'世界屋脊'...",
-    "center": { "x": 1200, "y": 1400 },
-    "boundary": [
-      { "x": 900, "y": 1100 }, { "x": 1100, "y": 1050 },
-      { "x": 1500, "y": 1150 }, { "x": 1600, "y": 1400 },
-      { "x": 1500, "y": 1700 }, { "x": 1100, "y": 1800 },
-      { "x": 900, "y": 1600 }
-    ],
-    "labelPosition": { "x": 1200, "y": 1400 },
-    "dropRadius": 80,
-    "altitude": "4000m+",
-    "surroundingMountains": ["himalaya", "kunlun", "tanggula", "hengduan"]
-  }
-]
+---
+
+## 二、答案固定后地形区虚线圈定
+
+### 问题
+
+`.region-answer` 是实线边框，需求要求虚线。
+
+### 修改
+
+**文件：`css/map.css`**
+
+```css
+.region-answer {
+    fill: rgba(76, 175, 80, 0.08);
+    stroke: #4caf50;
+    stroke-width: 2;
+    stroke-dasharray: 8, 5;  /* 新增虚线 */
+}
 ```
 
-### 开发顺序
+---
 
-1. **基础框架**
-   - 搭建 `index.html` 入口页和 `terrain.html` 地形模块页。
-   - 实现 `svg-map.js`：加载底图、设置 viewBox、提供屏幕坐标到 SVG 坐标的转换。
-   - 实现 `layers.js`：图层显隐控制。
-   - 编写 `base.css` 和 `map.css`：教学风格布局。
+## 三、地形起伏视觉效果
 
-2. **坐标采集工具（关键前置步骤）**
-   - 实现 `data-editor.js`：在 `terrain.html` 后附加 `?editor=1` 进入编辑模式。
-   - 点击底图时弹出小窗输入"名称"和"描述"，自动生成 JSON 数组，支持导出为文件。
-   - 用此工具采集 23 座山脉和 14 个地形区的坐标，生成 `mountains.json` 和 `terrain-regions.json`。
+### 方案：SVG drop-shadow 滤镜
 
-3. **地形模块——单人练习**
-   - 左侧生成可拖拽标签列表（山脉关卡/地形区关卡）。
-   - 实现拖拽落点判定和吸附动画。
-   - 实现计分、计时、提示功能。
-   - 点击已标注元素弹出描述框；地形区显示虚线边界。
+**文件：`js/core/svg-map.js`**
 
-4. **地形模块——双人 PK**
-   - 分屏界面设计。
-   - 轮流答题逻辑、胜负判定。
+在 `initSvgMap` 中初始化时，向 SVG `<defs>` 添加投影滤镜：
 
-5. **扩展其他模块**
-   - 行政区划：`admin.html` + `provinces.json`，关卡设计（省名→省会→简称）。
-   - 河流湖泊：`rivers.html` + `rivers.json`。
-   - 气候：`climate.html` + `climate.json`（以图层叠加为主，拖拽较少）。
+```javascript
+const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+svg.insertBefore(defs, svg.firstChild);
 
-6. **优化**
-   - 移动端触摸适配（Pointer Events 已基本覆盖）。
-   - 加载性能：底图较大（5MB），可加简单 loading 动画。
+const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+filter.id = 'terrain-shadow';
+filter.setAttribute('x', '-20%');
+filter.setAttribute('y', '-20%');
+filter.setAttribute('width', '140%');
+filter.setAttribute('height', '140%');
+filter.innerHTML = '<feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.25)"/>';
+defs.appendChild(filter);
+```
 
-## 验证方式
+在 `addMountainMarker` 中给圆形标记应用滤镜：`circle.setAttribute('filter', 'url(#terrain-shadow)')`
 
-1. 用浏览器直接打开 `terrain.html`（`file://` 协议）。
-2. 测试底图加载正常，经纬网线条清晰且可开关。
-3. 进入 `?editor=1` 模式，点击地图能正确输出坐标 JSON。
-4. 单人模式测试：拖拽山脉标签到正确位置，验证吸附动画、计分、描述弹窗、地形区虚线边界显示。
-5. 双人 PK 模式测试：轮流答题、界面切换、最终胜负判定。
-6. 图层控制测试：逐个开关各图层，确认无残留或错位。
+**文件：`css/map.css`**
+
+地形区边界增加阴影感：
+
+```css
+.region-boundary {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+```
+
+---
+
+## 四、修改文件清单
+
+| 文件 | 修改点 |
+|------|--------|
+| `js/core/svg-map.js` | addAnswerMarker/Line/Region 增加 onClick 参数；SVG defs 添加阴影滤镜；mountain-marker 应用滤镜 |
+| `terrain.html` | handleCorrect 传入 showDescription |
+| `css/map.css` | .answer-item pointer-events + cursor；.region-answer 虚线；.region-boundary 阴影 |
+
+---
+
+## 五、验证
+
+1. 山脉标注关卡 → 正确放置 → 点击答案标记 → 弹出描述弹窗（当前会显示"暂无描述"，待数据补充后显示真实内容）
+2. 地形区关卡 → 正确放置 → 确认虚线边界 → 点击弹出描述
+3. 确认原有功能（拖拽放置、提示、PK模式、图层开关）不受影响
+4. 确认山脉标记有投影效果、地形区边界有微阴影

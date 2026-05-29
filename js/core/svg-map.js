@@ -27,6 +27,38 @@ function initSvgMap(svgSelector) {
     svg.setAttribute('viewBox', `0 0 ${MAP_CONFIG.baseWidth} ${MAP_CONFIG.baseHeight}`);
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
+    // 添加 SVG 滤镜定义
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+
+    // 山脉标记投影滤镜
+    const shadowFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+    shadowFilter.id = 'terrain-shadow';
+    shadowFilter.setAttribute('x', '-30%');
+    shadowFilter.setAttribute('y', '-30%');
+    shadowFilter.setAttribute('width', '160%');
+    shadowFilter.setAttribute('height', '160%');
+    shadowFilter.innerHTML = '<feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.35)"/>';
+    defs.appendChild(shadowFilter);
+
+    // 答案标记发光滤镜（让答案在底图上更醒目）
+    const glowFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+    glowFilter.id = 'answer-glow';
+    glowFilter.setAttribute('x', '-50%');
+    glowFilter.setAttribute('y', '-50%');
+    glowFilter.setAttribute('width', '200%');
+    glowFilter.setAttribute('height', '200%');
+    glowFilter.innerHTML = `
+        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+        <feFlood flood-color="#4caf50" flood-opacity="0.5" result="color"/>
+        <feComposite in="color" in2="blur" operator="in" result="glow"/>
+        <feMerge>
+            <feMergeNode in="glow"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>`;
+    defs.appendChild(glowFilter);
+
+    svg.insertBefore(defs, svg.firstChild);
+
     // 创建图层组（按渲染顺序）
     const layers = {
         base: createGroup(svg, 'base-layer'),
@@ -138,6 +170,7 @@ function initSvgMap(svgSelector) {
         circle.setAttribute('cy', mountain.point.y);
         circle.setAttribute('r', 7);
         circle.setAttribute('class', 'mountain-marker');
+        circle.setAttribute('filter', 'url(#terrain-shadow)');
         g.appendChild(circle);
 
         // 标签
@@ -240,14 +273,15 @@ function initSvgMap(svgSelector) {
     /**
      * 添加固定答案标记（正确放置后显示，不受图层开关控制）
      * @param {Object} item - 数据对象
+     * @param {Function} onClick - 点击回调
      */
-    function addAnswerMarker(item) {
+    function addAnswerMarker(item, onClick) {
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('class', 'answer-item');
         g.setAttribute('data-id', item.id);
+        g.setAttribute('filter', 'url(#answer-glow)');
 
         if (item.point) {
-            // 山脉
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', item.point.x);
             circle.setAttribute('cy', item.point.y);
@@ -255,22 +289,28 @@ function initSvgMap(svgSelector) {
             circle.setAttribute('class', 'answer-marker');
             g.appendChild(circle);
         } else if (item.points && item.points.length >= 2) {
-            // 线型
-            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
             const pointsStr = item.points.map(p => `${p.x},${p.y}`).join(' ');
+            // 粗透明辅助线扩大点击区域
+            const hitPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            hitPolyline.setAttribute('points', pointsStr);
+            hitPolyline.setAttribute('class', 'line-answer-hit');
+            hitPolyline.setAttribute('fill', 'none');
+            hitPolyline.setAttribute('stroke', 'transparent');
+            hitPolyline.setAttribute('stroke-width', '18');
+            g.appendChild(hitPolyline);
+            // 可见线条
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
             polyline.setAttribute('points', pointsStr);
             polyline.setAttribute('class', 'answer-marker line-answer');
             polyline.setAttribute('fill', 'none');
             g.appendChild(polyline);
         } else if (item.boundary && item.boundary.length >= 3) {
-            // 地形区边界
             const pointsStr = item.boundary.map(p => `${p.x},${p.y}`).join(' ');
             const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             polygon.setAttribute('points', pointsStr);
             polygon.setAttribute('class', 'answer-marker region-answer');
             g.appendChild(polygon);
         } else if (item.center) {
-            // 地形区中心（无边界时）
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', item.center.x);
             circle.setAttribute('cy', item.center.y);
@@ -288,6 +328,14 @@ function initSvgMap(svgSelector) {
             text.setAttribute('text-anchor', 'middle');
             text.textContent = item.name;
             g.appendChild(text);
+        }
+
+        if (onClick) {
+            g.style.cursor = 'pointer';
+            g.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onClick(item);
+            });
         }
 
         layers.answers.appendChild(g);

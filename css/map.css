@@ -290,6 +290,11 @@
     pointer-events: none;
 }
 
+.answer-item {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
 .answer-marker {
     fill: #4caf50;
     stroke: #fff;
@@ -300,20 +305,27 @@
     font-size: 30px;
     font-weight: 700;
     fill: #2e7d32;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
     text-shadow: 0 1px 3px rgba(255,255,255,0.9);
 }
 
 .line-answer {
     stroke: #4caf50;
-    stroke-width: 3;
+    stroke-width: 4;
     fill: none;
+}
+
+.line-answer-hit {
+    pointer-events: stroke;
+    cursor: pointer;
 }
 
 .region-answer {
     fill: rgba(76, 175, 80, 0.08);
     stroke: #4caf50;
-    stroke-width: 2;
+    stroke-width: 2.5;
+    stroke-dasharray: 10, 6;
 }
 
 /* ============================================================

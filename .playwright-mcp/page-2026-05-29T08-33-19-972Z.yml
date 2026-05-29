@@ -1,0 +1,102 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "← 返回首页" [ref=e3] [cursor=pointer]:
+      - /url: index.html
+    - generic [ref=e4]: 中国的地形
+    - generic [ref=e5] [cursor=pointer]:
+      - checkbox "底图" [checked] [ref=e6]
+      - text: 底图
+    - generic [ref=e7] [cursor=pointer]:
+      - checkbox "山脉标记" [ref=e8]
+      - text: 山脉标记
+    - generic [ref=e9] [cursor=pointer]:
+      - checkbox "山脉图" [ref=e10]
+      - text: 山脉图
+    - generic [ref=e11] [cursor=pointer]:
+      - checkbox "地形图" [ref=e12]
+      - text: 地形图
+    - generic [ref=e13] [cursor=pointer]:
+      - checkbox "目标提示" [ref=e14]
+      - text: 目标提示
+    - generic [ref=e15]:
+      - button "单人练习" [ref=e16] [cursor=pointer]
+      - button "双人PK" [ref=e17] [cursor=pointer]
+      - button "坐标采集" [ref=e18] [cursor=pointer]
+  - generic [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]: 关卡：
+      - generic [ref=e22]: 山脉标注
+    - generic [ref=e23]:
+      - generic [ref=e24]: 时间：
+      - generic [ref=e25]: 00:00
+    - generic [ref=e26]:
+      - generic [ref=e27]: 得分：
+      - generic [ref=e28]: "0"
+    - generic [ref=e30]: 进度：
+    - button "💡 提示 ( 3 )" [disabled] [ref=e32]:
+      - text: 💡 提示 (
+      - generic [ref=e33]: "3"
+      - text: )
+    - button "🔄 重开" [ref=e34] [cursor=pointer]
+  - generic [ref=e36]:
+    - img "底图"
+    - img [ref=e37]:
+      - generic [ref=e38]:
+        - generic: 75°E
+        - generic: 80°E
+        - generic: 85°E
+        - generic: 90°E
+        - generic: 95°E
+        - generic: 100°E
+        - generic: 105°E
+        - generic: 110°E
+        - generic: 115°E
+        - generic: 120°E
+        - generic: 125°E
+        - generic: 130°E
+        - generic: 135°E
+        - generic: 20°N
+        - generic: 25°N
+        - generic: 30°N
+        - generic: 35°N
+        - generic: 40°N
+        - generic: 45°N
+        - generic: 50°N
+    - generic [ref=e39]:
+      - heading "山脉标注挑战" [level=2] [ref=e40]
+      - paragraph [ref=e41]: 请选择要挑战的关卡类型
+      - generic [ref=e42]:
+        - button "🏔 山脉标注 在地图上标注5座主要山脉" [ref=e43] [cursor=pointer]:
+          - generic [ref=e44]: 🏔 山脉标注
+          - generic [ref=e45]: 在地图上标注5座主要山脉
+        - button "🗺 地形区标注 在地图上标注3个主要地形区" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: 🗺 地形区标注
+          - generic [ref=e48]: 在地图上标注3个主要地形区
+      - button "开始挑战" [ref=e50] [cursor=pointer]
+  - generic:
+    - generic:
+      - generic: 挑战完成！
+      - generic:
+        - generic: ⭐
+        - generic: ⭐
+        - generic: ⭐
+      - generic:
+        - generic:
+          - generic: "0"
+          - generic: 得分
+        - generic:
+          - generic: 00:00
+          - generic: 用时
+        - generic:
+          - generic: "0"
+          - generic: 正确数
+        - generic:
+          - generic: "0"
+          - generic: 错误数
+      - generic:
+        - button "返回首页"
+        - button "再玩一次"
+  - generic:
+    - generic:
+      - generic:
+        - button "知道了"

@@ -1256,7 +1256,7 @@
 
             // 显示地图标记，并固定答案到独立图层
             state.mapEngine.setItemVisible(item.id, true);
-            state.mapEngine.addAnswerMarker(item);
+            state.mapEngine.addAnswerMarker(item, showDescription);
 
             // 动画：标签飞到地图上的目标位置（屏幕坐标）
             // 使用 SVG 的 CTM 矩阵将 SVG 内部坐标精确转换为屏幕坐标
