@@ -33,12 +33,11 @@ function initSvgMap(svgSelector) {
         grid: createGroup(svg, 'grid-layer'),
         regions: createGroup(svg, 'regions-layer'),
         mountains: createGroup(svg, 'mountains-layer'),
+        lines: createGroup(svg, 'lines-layer'),
         dropZones: createGroup(svg, 'dropzones-layer'),
+        answers: createGroup(svg, 'answers-layer'),
         editor: createGroup(svg, 'editor-layer')
     };
-
-    // 加载底图
-    loadBaseImage(layers.base);
 
     // 绘制经纬网
     drawGrid(layers.grid);
@@ -51,18 +50,6 @@ function initSvgMap(svgSelector) {
         g.setAttribute('class', className);
         parent.appendChild(g);
         return g;
-    }
-
-    /**
-     * 加载底图图片
-     */
-    function loadBaseImage(container) {
-        const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-        img.setAttribute('href', MAP_CONFIG.baseImage);
-        img.setAttribute('width', MAP_CONFIG.baseWidth);
-        img.setAttribute('height', MAP_CONFIG.baseHeight);
-        img.setAttribute('class', 'base-image');
-        container.appendChild(img);
     }
 
     /**
@@ -139,11 +126,11 @@ function initSvgMap(svgSelector) {
      * @param {Object} mountain - 山脉数据对象
      * @param {Function} onClick - 点击回调
      */
-    function addMountainMarker(mountain, onClick) {
+    function addMountainMarker(mountain, onClick, visible = false) {
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('class', 'mountain-item');
         g.setAttribute('data-id', mountain.id);
-        g.style.display = 'none'; // 初始隐藏，游戏放置后显示
+        g.style.display = (visible && layers.mountains.style.display !== 'none') ? '' : 'none';
 
         // 圆点标记
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -177,11 +164,11 @@ function initSvgMap(svgSelector) {
      * @param {Object} region - 地形区数据对象
      * @param {Function} onClick - 点击回调
      */
-    function addRegionBoundary(region, onClick) {
+    function addRegionBoundary(region, onClick, visible = false) {
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('class', 'region-item');
         g.setAttribute('data-id', region.id);
-        g.style.display = 'none'; // 初始隐藏
+        g.style.display = (visible && layers.regions.style.display !== 'none') ? '' : 'none';
 
         if (region.boundary && region.boundary.length >= 3) {
             const pointsStr = region.boundary.map(p => `${p.x},${p.y}`).join(' ');
@@ -251,6 +238,70 @@ function initSvgMap(svgSelector) {
     }
 
     /**
+     * 添加固定答案标记（正确放置后显示，不受图层开关控制）
+     * @param {Object} item - 数据对象
+     */
+    function addAnswerMarker(item) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'answer-item');
+        g.setAttribute('data-id', item.id);
+
+        if (item.point) {
+            // 山脉
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', item.point.x);
+            circle.setAttribute('cy', item.point.y);
+            circle.setAttribute('r', 9);
+            circle.setAttribute('class', 'answer-marker');
+            g.appendChild(circle);
+        } else if (item.points && item.points.length >= 2) {
+            // 线型
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            const pointsStr = item.points.map(p => `${p.x},${p.y}`).join(' ');
+            polyline.setAttribute('points', pointsStr);
+            polyline.setAttribute('class', 'answer-marker line-answer');
+            polyline.setAttribute('fill', 'none');
+            g.appendChild(polyline);
+        } else if (item.boundary && item.boundary.length >= 3) {
+            // 地形区边界
+            const pointsStr = item.boundary.map(p => `${p.x},${p.y}`).join(' ');
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon.setAttribute('points', pointsStr);
+            polygon.setAttribute('class', 'answer-marker region-answer');
+            g.appendChild(polygon);
+        } else if (item.center) {
+            // 地形区中心（无边界时）
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', item.center.x);
+            circle.setAttribute('cy', item.center.y);
+            circle.setAttribute('r', 9);
+            circle.setAttribute('class', 'answer-marker');
+            g.appendChild(circle);
+        }
+
+        // 标签
+        if (item.labelPosition) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', item.labelPosition.x);
+            text.setAttribute('y', item.labelPosition.y);
+            text.setAttribute('class', 'answer-label');
+            text.setAttribute('text-anchor', 'middle');
+            text.textContent = item.name;
+            g.appendChild(text);
+        }
+
+        layers.answers.appendChild(g);
+        return g;
+    }
+
+    /**
+     * 清除所有固定答案标记
+     */
+    function clearAnswers() {
+        layers.answers.innerHTML = '';
+    }
+
+    /**
      * 编辑模式：添加点击标记
      */
     function addEditorMarker(x, y, label) {
@@ -306,6 +357,91 @@ function initSvgMap(svgSelector) {
     }
 
     /**
+     * 编辑模式：添加折线预览（线型采集用）
+     * @param {Array} points - [{x,y}, ...]
+     * @param {string} label - 标签文本
+     */
+    function addEditorPolyline(points, label) {
+        if (!points || points.length < 1) return null;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'editor-polyline-group');
+
+        // 绘制折线（至少2个点）
+        if (points.length >= 2) {
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            const pointsStr = points.map(p => `${p.x},${p.y}`).join(' ');
+            polyline.setAttribute('points', pointsStr);
+            polyline.setAttribute('class', 'editor-polyline');
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke', '#ff5722');
+            polyline.setAttribute('stroke-width', '2');
+            polyline.setAttribute('stroke-dasharray', '4,4');
+            g.appendChild(polyline);
+        }
+
+        // 绘制顶点标记
+        points.forEach((p, i) => {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', p.x);
+            circle.setAttribute('cy', p.y);
+            circle.setAttribute('r', 5);
+            circle.setAttribute('class', 'editor-polyline-vertex');
+            g.appendChild(circle);
+        });
+
+        // 标签（放在第一个点旁边）
+        if (label && points.length) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', points[0].x + 10);
+            text.setAttribute('y', points[0].y - 8);
+            text.setAttribute('class', 'editor-label');
+            text.textContent = label;
+            g.appendChild(text);
+        }
+
+        layers.editor.appendChild(g);
+        return g;
+    }
+
+    /**
+     * 在地图上添加线型标记（游戏模式用）
+     * @param {Object} lineData - 线型数据对象（含 points, name 等）
+     * @param {Function} onClick - 点击回调
+     */
+    function addPolyline(lineData, onClick, visible = false) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'line-item');
+        g.setAttribute('data-id', lineData.id);
+        g.style.display = (visible && layers.lines.style.display !== 'none') ? '' : 'none';
+
+        if (lineData.points && lineData.points.length >= 2) {
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            const pointsStr = lineData.points.map(p => `${p.x},${p.y}`).join(' ');
+            polyline.setAttribute('points', pointsStr);
+            polyline.setAttribute('class', 'line-polyline');
+            g.appendChild(polyline);
+
+            if (onClick) {
+                polyline.addEventListener('click', () => onClick(lineData));
+            }
+        }
+
+        // 标签
+        if (lineData.labelPosition) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', lineData.labelPosition.x);
+            text.setAttribute('y', lineData.labelPosition.y);
+            text.setAttribute('class', 'line-label');
+            text.setAttribute('text-anchor', 'middle');
+            text.textContent = lineData.name;
+            g.appendChild(text);
+        }
+
+        layers.lines.appendChild(g);
+        return g;
+    }
+
+    /**
      * 清除编辑模式标记
      */
     function clearEditorMarkers() {
@@ -318,12 +454,16 @@ function initSvgMap(svgSelector) {
         screenToSvg,
         addMountainMarker,
         addRegionBoundary,
+        addPolyline,
         addDropZone,
         clearDropZones,
         setItemVisible,
         addEditorMarker,
         addEditorDropZone,
+        addEditorPolyline,
         clearEditorMarkers,
+        addAnswerMarker,
+        clearAnswers,
         config: MAP_CONFIG
     };
 }

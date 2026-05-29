@@ -332,6 +332,45 @@
     padding: 16px;
     z-index: 1500;
     border: 2px solid var(--color-accent);
+    transition: width 0.25s ease, padding 0.25s ease;
+}
+
+.editor-panel.collapsed {
+    width: 48px;
+    padding: 8px;
+    overflow: hidden;
+}
+
+.editor-panel.collapsed .editor-panel-inner {
+    display: none;
+}
+
+.editor-panel-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.2s ease;
+}
+
+.editor-panel-toggle:hover {
+    background: #e0e0e0;
+}
+
+.editor-panel.collapsed .editor-panel-toggle {
+    position: static;
+    margin: 0 auto;
 }
 
 .editor-panel h3 {
@@ -427,4 +466,37 @@
 
 .editor-point-item .btn-delete:hover {
     background: #ffebee;
+}
+
+/* 线型 SVG 样式 */
+.line-polyline {
+    fill: none;
+    stroke: #e53935;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    cursor: pointer;
+}
+
+.line-label {
+    font-size: 14px;
+    font-weight: 700;
+    fill: #e53935;
+    pointer-events: none;
+}
+
+.editor-polyline {
+    fill: none;
+    stroke: #ff5722;
+    stroke-width: 2;
+    stroke-dasharray: 4,4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.editor-polyline-vertex {
+    fill: #ff5722;
+    stroke: #fff;
+    stroke-width: 1.5;
+    cursor: pointer;
 }

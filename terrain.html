@@ -17,14 +17,17 @@
         <label class="layer-toggle active" data-layer="base">
             <input type="checkbox" checked> 底图
         </label>
-        <label class="layer-toggle active" data-layer="grid">
-            <input type="checkbox" checked> 经纬网
+        <label class="layer-toggle" data-layer="mountains" id="layerToggleMountains" style="display:none;">
+            <input type="checkbox"> 山脉标记
         </label>
-        <label class="layer-toggle active" data-layer="mountains">
-            <input type="checkbox" checked> 山脉标记
+        <label class="layer-toggle" data-layer="regions" id="layerToggleRegions" style="display:none;">
+            <input type="checkbox"> 地形区标注
         </label>
-        <label class="layer-toggle active" data-layer="regions">
-            <input type="checkbox" checked> 地形区边界
+        <label class="layer-toggle" data-layer="overlayMountain" id="layerToggleOverlayMountain">
+            <input type="checkbox"> 山脉图
+        </label>
+        <label class="layer-toggle" data-layer="overlayRegion" id="layerToggleOverlayRegion">
+            <input type="checkbox"> 地形图
         </label>
         <label class="layer-toggle" data-layer="dropZones">
             <input type="checkbox"> 目标提示
@@ -93,6 +96,9 @@
 
         <!-- 地图容器 -->
         <div class="map-container" id="mapContainer">
+            <img class="base-map-img" id="baseMapImg" src="assets/maps/terrain-base.jpg" alt="底图">
+            <div class="overlay-container" id="overlayContainer"></div>
+            <div class="handle-container" id="handleContainer"></div>
             <svg class="map-svg" id="mapSvg"></svg>
 
             <!-- 开始游戏覆盖层 -->
@@ -102,11 +108,11 @@
                 <div class="level-select" id="levelSelect">
                     <button class="level-card active" data-level="mountains" id="levelBtnMountains">
                         <div class="level-card-title">&#x1F3D4; 山脉标注</div>
-                        <div class="level-card-desc">在地图上标注23座主要山脉</div>
+                        <div class="level-card-desc" id="levelDescMountains">在地图上标注主要山脉</div>
                     </button>
                     <button class="level-card" data-level="terrain-regions" id="levelBtnRegions">
                         <div class="level-card-title">&#x1F5FA; 地形区标注</div>
-                        <div class="level-card-desc">在山脉骨架中标注14个主要地形区</div>
+                        <div class="level-card-desc" id="levelDescRegions">在地图上标注主要地形区</div>
                     </button>
                 </div>
                 <div style="display:flex;gap:12px;">
@@ -163,6 +169,13 @@
 
     <!-- 编辑模式面板 -->
     <div class="editor-panel" id="editorPanel" style="display:none;">
+        <button class="editor-panel-toggle" id="editorPanelToggle" title="收起/展开面板">⬇</button>
+        <div class="editor-panel-inner">
+        <div class="editor-tabs" id="editorTabs">
+            <button class="editor-tab active" data-tab="collect">📝 坐标采集</button>
+            <button class="editor-tab" data-tab="calibrate">🔧 图层校准</button>
+        </div>
+        <div id="editorCollectPanel">
         <h3>
             <span>📝 坐标采集</span>
             <span style="font-size:12px;color:#999;font-weight:400;">点击地图添加</span>
@@ -171,8 +184,16 @@
             <label>采集类型</label>
             <select id="editorType">
                 <option value="mountain">山脉（单点）</option>
+                <option value="line">线型（连续多点）</option>
                 <option value="region-center">地形区中心（单点）</option>
                 <option value="region-boundary">地形区边界（连续多点）</option>
+            </select>
+        </div>
+        <div class="editor-form-row">
+            <label>目标关卡</label>
+            <select id="editorTargetLevel">
+                <option value="mountains">山脉标注</option>
+                <option value="terrain-regions">地形区标注</option>
             </select>
         </div>
         <div class="editor-form-row">
@@ -187,19 +208,91 @@
             <label>坐标（点击地图自动填充）</label>
             <input type="text" id="editorCoords" readonly placeholder="x, y">
         </div>
+        <div class="editor-form-row" id="editorRadiusRow">
+            <label>范围半径 (px)</label>
+            <input type="number" id="editorRadius" value="50" min="10" max="300" step="5">
+        </div>
         <div class="editor-actions">
             <button class="btn btn-primary" id="editorAddBtn">添加</button>
             <button class="btn btn-secondary" id="editorFinishBoundaryBtn" style="display:none;">完成边界</button>
+            <button class="btn btn-secondary" id="editorFinishLineBtn" style="display:none;">完成线型</button>
             <button class="btn btn-accent" id="editorTestBtn" title="将当前采集点加载到左侧待标注，测试拖拽落点">加载测试</button>
+            <button class="btn btn-secondary" id="editorUndoBtn" title="撤销上一步 (Ctrl+Z)">撤销</button>
             <button class="btn btn-secondary" id="editorClearBtn">清空</button>
             <button class="btn btn-secondary" id="editorExportBtn">导出JSON</button>
         </div>
         <div class="editor-point-list" id="editorList"></div>
+        </div>
+
+        <!-- 图层校准子面板 -->
+        <div id="editorCalibratePanel" style="display:none;">
+            <h3>
+                <span>🔧 图层校准</span>
+                <span style="font-size:12px;color:#999;font-weight:400;">拖拽对齐参考图</span>
+            </h3>
+            <div class="editor-form-row">
+                <label>校准图层</label>
+                <select id="calibrationLayerSelect">
+                    <option value="mountainBlank">山脉图</option>
+                    <option value="terrainRegion">地形图</option>
+                </select>
+            </div>
+            <div class="editor-form-row calibration-slider-row">
+                <label>X 偏移</label>
+                <input type="range" id="calibrationX" min="-50" max="50" step="0.1" value="0">
+                <span class="calibration-value" id="calibrationXVal">0</span>
+            </div>
+            <div class="editor-form-row calibration-slider-row">
+                <label>Y 偏移</label>
+                <input type="range" id="calibrationY" min="-50" max="50" step="0.1" value="0">
+                <span class="calibration-value" id="calibrationYVal">0</span>
+            </div>
+            <div class="editor-form-row calibration-slider-row">
+                <label>宽度</label>
+                <input type="range" id="calibrationW" min="20" max="200" step="0.1" value="100">
+                <span class="calibration-value" id="calibrationWVal">100</span>
+            </div>
+            <div class="editor-form-row calibration-slider-row">
+                <label>高度</label>
+                <input type="range" id="calibrationH" min="20" max="200" step="0.1" value="100">
+                <span class="calibration-value" id="calibrationHVal">100</span>
+            </div>
+            <div class="editor-form-row calibration-slider-row">
+                <label>透明度</label>
+                <input type="range" id="calibrationOpacity" min="0.1" max="1" step="0.05" value="0.8">
+                <span class="calibration-value" id="calibrationOpacityVal">0.80</span>
+            </div>
+            <div class="editor-form-row calibration-slider-row">
+                <label>等比缩放</label>
+                <input type="range" id="calibrationScale" min="0.1" max="3" step="0.05" value="1">
+                <span class="calibration-value" id="calibrationScaleVal">1.00</span>
+            </div>
+            <div class="editor-form-row">
+                <label>
+                    <input type="checkbox" id="calibrationShowHandles" checked> 显示控制点
+                </label>
+            </div>
+            <div class="editor-actions">
+                <button class="btn btn-secondary" id="calibrationResetLayerBtn">重置当前图层</button>
+                <button class="btn btn-secondary" id="calibrationResetAllBtn">恢复默认</button>
+                <button class="btn btn-primary" id="calibrationExportBtn">导出校准数据</button>
+            </div>
+            <div class="calibration-hint" style="margin-top:10px;font-size:12px;color:#666;">
+                提示：拖拽画布上的9个控制点进行精细对齐；按住Alt微调，按住Shift快速拖拽。
+            </div>
+        </div>
+        </div>
     </div>
 
+    <script src="data/overlay-calibration.js"></script>
+    <script src="data/mountains.js"></script>
+    <script src="data/lines.js"></script>
+    <script src="data/terrain-regions.js"></script>
+    <script src="data/game-config.js"></script>
     <script src="js/utils/helpers.js"></script>
     <script src="js/core/svg-map.js"></script>
     <script src="js/core/layers.js"></script>
+    <script src="js/core/overlay-engine.js"></script>
     <script>
     // ============================================================
     // 地形模块主逻辑
@@ -230,8 +323,12 @@
             // 编辑模式
             editorItems: [],
             editorBoundaryPoints: [],
+            editorLinePoints: [],
             editorCurrentType: 'mountain',
             editorEditingIdx: -1,
+            editorTab: 'collect',
+            calibrationDrag: null,
+            undoStack: [],
             // 双人 PK 模式
             pk: {
                 active: false,
@@ -249,6 +346,8 @@
         const els = {
             mapSvg: document.getElementById('mapSvg'),
             mapContainer: document.getElementById('mapContainer'),
+            overlayContainer: document.getElementById('overlayContainer'),
+            handleContainer: document.getElementById('handleContainer'),
             labelList: document.getElementById('labelList'),
             sidebar: document.getElementById('sidebar'),
             statusBar: document.getElementById('statusBar'),
@@ -274,7 +373,7 @@
         // 初始化
         // ============================================================
 
-        async function init() {
+        function init() {
             // 检测编辑模式
             const urlParams = new URLSearchParams(location.search);
             const isEditor = urlParams.has('editor');
@@ -284,26 +383,200 @@
             state.layerManager = createLayerManager(state.mapEngine);
             state.layerManager.bindControls();
 
-            // 加载游戏配置
-            try {
-                state.gameConfig = await loadJSON('data/game-config.json');
-            } catch (e) {
-                console.warn('游戏配置加载失败，使用默认配置', e);
-                state.gameConfig = {
-                    terrain: { levels: [
-                        { id: 'mountains', name: '山脉标注', score: { correct: 10, wrong: -5, hint: -3 }, timeLimit: 300 },
-                        { id: 'terrain-regions', name: '地形区标注', score: { correct: 10, wrong: -5, hint: -3 }, timeLimit: 300 }
-                    ]},
-                    stars: { '3': { maxTime: 120, maxErrors: 2 }, '2': { maxTime: 240, maxErrors: 5 } },
-                    pk: { turnTimeLimit: 20, switchOnWrong: true }
-                };
+            // 初始化叠加图片引擎
+            state.overlayEngine = createOverlayEngine({
+                container: els.overlayContainer,
+                baseWidth: 2981,
+                baseHeight: 2180,
+                mountainSrc: '地形图片/中国的山脉.jpg',
+                regionSrc: '地形图片/中国地形图.jpg',
+                onChange: saveOverlayCalibrationToStorage
+            });
+            loadOverlayCalibration();
+
+            // 同步 overlay 容器尺寸并监听 resize
+            // 使用 requestAnimationFrame 确保 SVG 布局完成后再计算
+            requestAnimationFrame(() => {
+                syncOverlayContainer();
+                if (state.overlayEngine) state.overlayEngine.renderOverlays();
+            });
+            window.addEventListener('resize', () => {
+                if (state.mode === 'editor' && state.editorTab === 'calibrate') {
+                    setCalibrationCanvas(true);
+                } else {
+                    syncOverlayContainer();
+                    if (state.overlayEngine) state.overlayEngine.renderOverlays();
+                }
+            });
+            // ResizeObserver 监听 map-container 尺寸变化（侧边栏显隐、面板收起等不会触发 window resize）
+            if (typeof ResizeObserver !== 'undefined') {
+                const _ro = new ResizeObserver(() => {
+                    if (state.mode === 'editor' && state.editorTab === 'calibrate') {
+                        setCalibrationCanvas(true);
+                    } else {
+                        syncOverlayContainer();
+                        if (state.overlayEngine) state.overlayEngine.renderOverlays();
+                    }
+                });
+                _ro.observe(els.mapContainer);
             }
 
+            // 加载游戏配置（从全局 JS 变量读取，兼容 file:// 协议）
+            state.gameConfig = window.GAME_CONFIG || {
+                terrain: { levels: [
+                    { id: 'mountains', name: '山脉标注', score: { correct: 10, wrong: -5, hint: -3 }, timeLimit: 300 },
+                    { id: 'terrain-regions', name: '地形区标注', score: { correct: 10, wrong: -5, hint: -3 }, timeLimit: 300 }
+                ]},
+                stars: { '3': { maxTime: 120, maxErrors: 2 }, '2': { maxTime: 240, maxErrors: 5 } },
+                pk: { turnTimeLimit: 20, switchOnWrong: true }
+            };
+
+            bindModeSwitch();
             if (isEditor) {
                 enterEditorMode();
             } else {
                 enterGameMode();
             }
+        }
+
+        function syncOverlayContainer() {
+            const container = els.mapContainer;
+            const overlayContainer = els.overlayContainer;
+            const handleContainer = els.handleContainer;
+            const containerRect = container.getBoundingClientRect();
+
+            // 以 base-map-img 的 object-fit:contain 实际可见区域为锚点
+            // 无论是否有画布 padding，底图可见区域都是叠加图的唯一参照
+            const baseImg = document.getElementById('baseMapImg');
+            const imgRect = baseImg.getBoundingClientRect();
+            const imgAspect = MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
+            const elAspect = imgRect.width / imgRect.height;
+            let visX, visY, visW, visH;
+            if (elAspect > imgAspect) {
+                visH = imgRect.height;
+                visW = imgRect.height * imgAspect;
+                visX = imgRect.x + (imgRect.width - visW) / 2;
+                visY = imgRect.y;
+            } else {
+                visW = imgRect.width;
+                visH = imgRect.width / imgAspect;
+                visX = imgRect.x;
+                visY = imgRect.y + (imgRect.height - visH) / 2;
+            }
+
+            const left = (visX - containerRect.left) + 'px';
+            const top = (visY - containerRect.top) + 'px';
+            const width = visW + 'px';
+            const height = visH + 'px';
+
+            overlayContainer.style.position = 'absolute';
+            overlayContainer.style.inset = '';
+            overlayContainer.style.left = left;
+            overlayContainer.style.top = top;
+            overlayContainer.style.width = width;
+            overlayContainer.style.height = height;
+            if (handleContainer) {
+                handleContainer.style.position = 'absolute';
+                handleContainer.style.inset = '';
+                handleContainer.style.left = left;
+                handleContainer.style.top = top;
+                handleContainer.style.width = width;
+                handleContainer.style.height = height;
+            }
+        }
+
+        /**
+         * 校准模式画布扩展：扩大容器 padding 创造出空白操作区域，
+         * 但保持底图、overlay、SVG 的显示大小不变。
+         */
+        function setCalibrationCanvas(expanded) {
+            const padding = 80;
+            const container = els.mapContainer;
+            const baseMap = document.getElementById('baseMapImg');
+            const overlay = els.overlayContainer;
+            const svg = els.mapSvg;
+            const handleContainer = els.handleContainer;
+
+            if (expanded) {
+                // 如果已经扩展过（如 resize 时），先恢复原始状态再重新计算，避免尺寸累积
+                if (state._calibrationStyles) {
+                    const s = state._calibrationStyles;
+                    Object.assign(container.style, s.container);
+                    Object.assign(baseMap.style, s.baseMap);
+                    Object.assign(overlay.style, s.overlay);
+                    Object.assign(svg.style, s.svg);
+                    delete state._calibrationStyles;
+                }
+
+                // 保存当前原始样式
+                state._calibrationStyles = {
+                    container: {
+                        padding: container.style.padding,
+                        width: container.style.width,
+                        height: container.style.height,
+                        flex: container.style.flex
+                    },
+                    baseMap: {
+                        inset: baseMap.style.inset,
+                        width: baseMap.style.width,
+                        height: baseMap.style.height
+                    },
+                    svg: {
+                        inset: svg.style.inset,
+                        width: svg.style.width,
+                        height: svg.style.height
+                    }
+                };
+
+                // 获取原始 content-box 尺寸（当前尚未加 padding）
+                const rect = container.getBoundingClientRect();
+                const originalWidth = rect.width;
+                const originalHeight = rect.height;
+
+                container.style.padding = padding + 'px';
+                container.style.width = (originalWidth + padding * 2) + 'px';
+                container.style.height = (originalHeight + padding * 2) + 'px';
+                container.style.flex = 'none';
+
+                // 子元素使用固定像素尺寸，保持与原始大小完全一致
+                // overlayContainer/handleContainer 由 syncOverlayContainer() 统一管理定位
+                const inset = padding + 'px';
+                [baseMap, svg].forEach(el => {
+                    el.style.inset = inset;
+                    el.style.width = originalWidth + 'px';
+                    el.style.height = originalHeight + 'px';
+                });
+            } else {
+                const s = state._calibrationStyles;
+                if (!s) return;
+                Object.assign(container.style, s.container);
+                Object.assign(baseMap.style, s.baseMap);
+                Object.assign(svg.style, s.svg);
+                delete state._calibrationStyles;
+            }
+
+            syncOverlayContainer();
+            if (state.overlayEngine) state.overlayEngine.renderOverlays();
+        }
+
+        function loadOverlayCalibration() {
+            let data = null;
+            if (window.OVERLAY_CALIBRATION) {
+                data = window.OVERLAY_CALIBRATION;
+            }
+            if (!data) {
+                try {
+                    const stored = localStorage.getItem('terrain-overlay-calibration');
+                    if (stored) data = JSON.parse(stored);
+                } catch (e) { /* ignore */ }
+            }
+            state.overlayEngine.loadOverlays(data);
+        }
+
+        function saveOverlayCalibrationToStorage(data) {
+            try {
+                localStorage.setItem('terrain-overlay-calibration', JSON.stringify(data));
+            } catch (e) { /* ignore */ }
         }
 
         // ============================================================
@@ -317,20 +590,54 @@
             els.sidebar.style.display = 'none';
             els.toolbar.querySelector('#editorBtn').style.display = '';
 
-            bindModeSwitch();
             bindGameControls();
             bindLevelSelect();
+            updateStartOverlayCounts();
             setupLevel('mountains');
+        }
+
+        /** 更新开始覆盖层上的关卡描述为实际数据数量 */
+        function updateStartOverlayCounts() {
+            const allItems = [];
+            (window.GEO_DATA?.mountains || []).forEach(d => {
+                allItems.push({ targetLevel: d.targetLevel || 'mountains' });
+            });
+            (window.GEO_DATA?.lines || []).forEach(d => {
+                allItems.push({ targetLevel: d.targetLevel || 'mountains' });
+            });
+            (window.GEO_DATA?.regions || []).forEach(d => {
+                allItems.push({ targetLevel: d.targetLevel || 'terrain-regions' });
+            });
+
+            const mountainCount = allItems.filter(i => i.targetLevel === 'mountains').length;
+            const regionCount = allItems.filter(i => i.targetLevel === 'terrain-regions').length;
+
+            const descMountains = document.getElementById('levelDescMountains');
+            const descRegions = document.getElementById('levelDescRegions');
+            if (descMountains) descMountains.textContent = `在地图上标注${mountainCount}座主要山脉`;
+            if (descRegions) descRegions.textContent = `在地图上标注${regionCount}个主要地形区`;
         }
 
         function bindModeSwitch() {
             els.modeSwitch.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const mode = btn.dataset.mode;
+                    const urlParams = new URLSearchParams(location.search);
+                    const isEditor = urlParams.has('editor');
+
                     if (mode === 'editor') {
-                        location.search = '?editor=1';
+                        if (!isEditor) {
+                            location.search = '?editor=1';
+                        }
                         return;
                     }
+
+                    // 从编辑器模式切回游戏模式需要刷新页面
+                    if (isEditor) {
+                        location.href = 'terrain.html';
+                        return;
+                    }
+
                     els.modeSwitch.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     state.mode = mode;
@@ -384,6 +691,28 @@
             els.restartBtn.addEventListener('click', restartGame);
             els.hintBtn.addEventListener('click', useHint);
 
+            // 目标提示开关变化时更新提示按钮状态
+            const dropZonesToggle = document.querySelector('.layer-toggle[data-layer="dropZones"] input');
+            if (dropZonesToggle) {
+                dropZonesToggle.addEventListener('change', () => {
+                    updateUI();
+                });
+            }
+
+            // 叠加图片开关
+            const overlayMountainToggle = document.querySelector('.layer-toggle[data-layer="overlayMountain"] input');
+            const overlayRegionToggle = document.querySelector('.layer-toggle[data-layer="overlayRegion"] input');
+            if (overlayMountainToggle) {
+                overlayMountainToggle.addEventListener('change', () => {
+                    state.overlayEngine.setVisible('mountainBlank', overlayMountainToggle.checked);
+                });
+            }
+            if (overlayRegionToggle) {
+                overlayRegionToggle.addEventListener('change', () => {
+                    state.overlayEngine.setVisible('terrainRegion', overlayRegionToggle.checked);
+                });
+            }
+
             document.getElementById('resultRestartBtn').addEventListener('click', () => {
                 document.getElementById('resultModal').classList.remove('active');
                 restartGame();
@@ -408,29 +737,34 @@
             });
         }
 
-        async function setupLevel(levelId) {
+        function setupLevel(levelId) {
             state.level = levelId;
             const levelConfig = state.gameConfig.terrain.levels.find(l => l.id === levelId);
             els.levelName.textContent = levelConfig ? levelConfig.name : (levelId === 'mountains' ? '山脉标注' : '地形区标注');
 
-            // 严格使用本地采集数据（与坐标采集模块共用同一份 localStorage）
-            const storageKey = levelId === 'mountains' ? STORAGE_KEYS.mountains : STORAGE_KEYS.regions;
-            let data = [];
-            let stored = null;
-            try {
-                stored = localStorage.getItem(storageKey);
-                if (stored) data = JSON.parse(stored);
-            } catch (e) {
-                console.warn('本地采集数据解析失败', e);
-            }
-            console.log('[setupLevel] levelId=', levelId, 'key=', storageKey, 'stored=', stored, 'data.length=', data.length);
+            // 从全局 JS 数据文件加载（兼容 file:// 协议）
+            state.items = dataManager.load(levelId);
+            console.log('[setupLevel] levelId=', levelId, 'items.length=', state.items.length);
 
-            if (Array.isArray(data) && data.length > 0) {
-                state.items = data;
+            // 根据关卡动态显示对应开关，并重置所有动态图层为关闭
+            const layerToggleMountains = document.getElementById('layerToggleMountains');
+            const layerToggleRegions = document.getElementById('layerToggleRegions');
+            if (levelId === 'mountains') {
+                layerToggleMountains.style.display = '';
+                layerToggleRegions.style.display = 'none';
             } else {
-                // 未采集时保持空列表，开始挑战会给出提示
-                state.items = [];
+                layerToggleMountains.style.display = 'none';
+                layerToggleRegions.style.display = '';
             }
+            state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false });
+
+            // 重置叠加图片开关和可见性
+            const overlayMountainToggle = document.querySelector('.layer-toggle[data-layer="overlayMountain"] input');
+            const overlayRegionToggle = document.querySelector('.layer-toggle[data-layer="overlayRegion"] input');
+            if (overlayMountainToggle) overlayMountainToggle.checked = false;
+            if (overlayRegionToggle) overlayRegionToggle.checked = false;
+            state.overlayEngine.setVisible('mountainBlank', false);
+            state.overlayEngine.setVisible('terrainRegion', false);
 
             // 重置状态
             state.placedIds.clear();
@@ -443,17 +777,22 @@
 
             // 清空地图上的旧标记
             state.mapEngine.layers.mountains.innerHTML = '';
+            state.mapEngine.layers.lines.innerHTML = '';
             state.mapEngine.layers.regions.innerHTML = '';
             state.mapEngine.clearDropZones();
+            state.mapEngine.clearAnswers();
 
-            // 渲染地图标记（初始隐藏，放置后显示）
+            // 渲染地图标记（初始可见，开始游戏后隐藏未放置的）
             state.items.forEach(item => {
-                if (levelId === 'mountains') {
-                    state.mapEngine.addMountainMarker(item, showDescription);
-                } else {
-                    state.mapEngine.addRegionBoundary(item, showDescription);
+                if (item.point) {
+                    state.mapEngine.addMountainMarker(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'mountain');
+                } else if (item.points && item.points.length) {
+                    state.mapEngine.addPolyline(item, showDescription, true);
+                } else if (item.center || (item.boundary && item.boundary.length)) {
+                    state.mapEngine.addRegionBoundary(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'region');
                 }
-                state.mapEngine.addDropZone(item, levelId === 'mountains' ? 'mountain' : 'region');
             });
 
             // 生成侧边栏标签
@@ -463,24 +802,6 @@
             els.startOverlay.style.display = '';
             document.getElementById('startTitle').textContent = els.levelName.textContent + '挑战';
             els.sidebar.style.display = 'none';
-        }
-
-        function getSampleData(levelId) {
-            if (levelId === 'mountains') {
-                return [
-                    { id: 'daxinganling', name: '大兴安岭', description: '东北平原与内蒙古高原的分界线', point: { x: 2100, y: 680 }, dropRadius: 50 },
-                    { id: 'taihang', name: '太行山', description: '黄土高原与华北平原的分界线', point: { x: 1900, y: 1200 }, dropRadius: 50 },
-                    { id: 'qinling', name: '秦岭', description: '南方与北方的重要地理分界线', point: { x: 1700, y: 1350 }, dropRadius: 50 },
-                    { id: 'wushan', name: '巫山', description: '四川盆地与长江中下游平原的分界线', point: { x: 1750, y: 1450 }, dropRadius: 50 },
-                    { id: 'xuefeng', name: '雪峰山', description: '第二级阶梯与第三级阶梯的分界线之一', point: { x: 1800, y: 1600 }, dropRadius: 50 }
-                ];
-            } else {
-                return [
-                    { id: 'qingzang', name: '青藏高原', description: '世界屋脊，平均海拔4000米以上', center: { x: 1200, y: 1400 }, dropRadius: 80, boundary: [{x:900,y:1100},{x:1500,y:1100},{x:1600,y:1500},{x:1200,y:1800}] },
-                    { id: 'sichuan', name: '四川盆地', description: '中国四大盆地之一，气候湿润', center: { x: 1500, y: 1500 }, dropRadius: 60, boundary: [{x:1350,y:1400},{x:1650,y:1400},{x:1600,y:1650},{x:1400,y:1650}] },
-                    { id: 'dongbei', name: '东北平原', description: '中国最大的平原，黑土肥沃', center: { x: 2350, y: 800 }, dropRadius: 70, boundary: [{x:2100,y:650},{x:2600,y:650},{x:2600,y:950},{x:2100,y:950}] }
-                ];
-            }
         }
 
         function renderLabels() {
@@ -510,49 +831,70 @@
             els.scoreDisplay.textContent = state.score;
             els.timerDisplay.textContent = formatTime(state.timer);
             els.hintCount.textContent = Math.max(0, state.hintsMax - state.hintsUsed);
-            els.hintBtn.disabled = state.hintsUsed >= state.hintsMax || !state.isPlaying;
+            const dropZonesEnabled = state.layerManager ? state.layerManager.getState('dropZones') : false;
+            els.hintBtn.disabled = state.hintsUsed >= state.hintsMax || !state.isPlaying || !dropZonesEnabled;
         }
 
         // ============================================================
-        // 本地存储（坐标采集数据持久化）
+        // 数据管理器：纯前端，从全局 JS 变量读取（兼容 file:// 协议）
         // ============================================================
 
-        const STORAGE_KEYS = {
-            mountains: 'geo_editor_mountains',
-            regions: 'geo_editor_regions'
+        const dataManager = {
+            /** 加载指定关卡的数据，返回深拷贝。从所有数据源中按 targetLevel 过滤 */
+            load(levelId) {
+                const allData = [];
+                const mountains = window.GEO_DATA?.mountains || [];
+                const lines = window.GEO_DATA?.lines || [];
+                const regions = window.GEO_DATA?.regions || [];
+
+                mountains.forEach(d => {
+                    const copy = JSON.parse(JSON.stringify(d));
+                    if (!copy.targetLevel) copy.targetLevel = 'mountains';
+                    allData.push(copy);
+                });
+                lines.forEach(d => {
+                    const copy = JSON.parse(JSON.stringify(d));
+                    if (!copy.targetLevel) copy.targetLevel = 'mountains';
+                    allData.push(copy);
+                });
+                regions.forEach(d => {
+                    const copy = JSON.parse(JSON.stringify(d));
+                    if (!copy.targetLevel) copy.targetLevel = 'terrain-regions';
+                    allData.push(copy);
+                });
+
+                return allData.filter(d => d.targetLevel === levelId);
+            }
         };
 
-        /** 从 localStorage 加载采集数据 */
+        /** 从全局 JS 数据文件加载采集数据到编辑器 */
         function loadEditorStorage() {
-            try {
-                const rawMountains = localStorage.getItem(STORAGE_KEYS.mountains);
-                const rawRegions = localStorage.getItem(STORAGE_KEYS.regions);
-                console.log('[loadEditorStorage] raw keys:', STORAGE_KEYS.mountains, rawMountains, STORAGE_KEYS.regions, rawRegions);
-                const mountains = JSON.parse(rawMountains || '[]');
-                const regions = JSON.parse(rawRegions || '[]');
-                state.editorItems = [
-                    ...mountains.map(d => ({ type: 'mountain', data: d })),
-                    ...regions.map(d => ({ type: 'region', data: d }))
-                ];
-                console.log('[loadEditorStorage] parsed:', state.editorItems.length, 'items');
-            } catch (e) {
-                console.warn('加载本地采集数据失败', e);
-                state.editorItems = [];
-            }
+            const mountains = window.GEO_DATA?.mountains || [];
+            const lines = window.GEO_DATA?.lines || [];
+            const regions = window.GEO_DATA?.regions || [];
+            state.editorItems = [
+                ...mountains.map(d => {
+                    const data = JSON.parse(JSON.stringify(d));
+                    if (!data.targetLevel) data.targetLevel = 'mountains';
+                    return { type: 'mountain', data };
+                }),
+                ...lines.map(d => {
+                    const data = JSON.parse(JSON.stringify(d));
+                    if (!data.targetLevel) data.targetLevel = 'mountains';
+                    return { type: 'line', data };
+                }),
+                ...regions.map(d => {
+                    const data = JSON.parse(JSON.stringify(d));
+                    if (!data.targetLevel) data.targetLevel = 'terrain-regions';
+                    return { type: 'region', data };
+                })
+            ];
+            console.log('[loadEditorStorage] loaded', state.editorItems.length, 'items');
         }
 
-        /** 保存采集数据到 localStorage */
+        /** 保存采集数据到内存（实际持久化通过"导出数据文件"按钮生成 .js 文件） */
         function saveEditorStorage() {
-            try {
-                const mountains = state.editorItems.filter(i => i.type === 'mountain').map(i => i.data);
-                const regions = state.editorItems.filter(i => i.type === 'region').map(i => i.data);
-                localStorage.setItem(STORAGE_KEYS.mountains, JSON.stringify(mountains));
-                localStorage.setItem(STORAGE_KEYS.regions, JSON.stringify(regions));
-                console.log('[saveEditorStorage] saved:', STORAGE_KEYS.mountains, mountains.length, STORAGE_KEYS.regions, regions.length);
-            } catch (e) {
-                console.warn('保存采集数据失败', e);
-                showToast('保存失败：浏览器可能禁用了本地存储，请检查隐私模式设置', 'error', 4000);
-            }
+            console.log('[saveEditorStorage] 数据已更新到内存，请使用"导出数据文件"按钮保存为 .js 文件');
         }
 
         /** 将编辑器数据同步到左侧待标注栏 */
@@ -567,11 +909,14 @@
 
             state.items.forEach(item => {
                 if (item.point) {
-                    state.mapEngine.addMountainMarker(item, showDescription);
-                } else if (item.center) {
-                    state.mapEngine.addRegionBoundary(item, showDescription);
+                    state.mapEngine.addMountainMarker(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'mountain');
+                } else if (item.points && item.points.length) {
+                    state.mapEngine.addPolyline(item, showDescription, true);
+                } else if (item.center || (item.boundary && item.boundary.length)) {
+                    state.mapEngine.addRegionBoundary(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'region');
                 }
-                state.mapEngine.addDropZone(item, item.point ? 'mountain' : 'region');
             });
 
             renderLabels();
@@ -590,6 +935,7 @@
             state.isPlaying = true;
             els.startOverlay.style.display = 'none';
             els.sidebar.style.display = '';
+
             if (state.pk.active) {
                 startPkGame();
             } else {
@@ -599,6 +945,7 @@
                 }, 1000);
             }
             setupDragAndDrop();
+            updateUI();
         }
 
         function startPkGame() {
@@ -801,15 +1148,42 @@
 
             // 转换为 SVG 坐标
             const svgPos = state.mapEngine.screenToSvg(clientX, clientY);
-            const targetPos = item.point || item.center;
             const dropRadius = item.dropRadius || 50;
 
-            if (!targetPos) return;
+            // 计算释放位置与目标的最短距离
+            let dist = Infinity;
+            let targetPos = null;
 
-            // 计算距离
-            const dx = svgPos.x - targetPos.x;
-            const dy = svgPos.y - targetPos.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (item.point) {
+                targetPos = item.point;
+                const dx = svgPos.x - targetPos.x;
+                const dy = svgPos.y - targetPos.y;
+                dist = Math.sqrt(dx * dx + dy * dy);
+            } else if (item.center) {
+                targetPos = item.center;
+                const dx = svgPos.x - targetPos.x;
+                const dy = svgPos.y - targetPos.y;
+                dist = Math.sqrt(dx * dx + dy * dy);
+            } else if (item.points && item.points.length) {
+                // 线型：计算到所有顶点和线段的最短距离
+                for (let i = 0; i < item.points.length; i++) {
+                    const p = item.points[i];
+                    const d = Math.sqrt((svgPos.x - p.x) ** 2 + (svgPos.y - p.y) ** 2);
+                    if (d < dist) {
+                        dist = d;
+                        targetPos = p;
+                    }
+                }
+                for (let i = 0; i < item.points.length - 1; i++) {
+                    const d = pointToSegmentDist(svgPos.x, svgPos.y, item.points[i], item.points[i + 1]);
+                    if (d < dist) {
+                        dist = d;
+                        targetPos = item.points[i]; // 落点吸附到线段起点附近（简化处理）
+                    }
+                }
+            }
+
+            if (!targetPos) return;
 
             if (dist <= dropRadius) {
                 // 正确放置
@@ -858,7 +1232,6 @@
                 // 2秒后重置标签状态，方便反复测试
                 setTimeout(() => {
                     labelEl.classList.remove('placed');
-                    state.mapEngine.setItemVisible(item.id, false);
                 }, 2000);
                 return;
             }
@@ -881,8 +1254,9 @@
             labelEl.classList.add('placed');
             labelEl.classList.remove('dragging');
 
-            // 显示地图标记
+            // 显示地图标记，并固定答案到独立图层
             state.mapEngine.setItemVisible(item.id, true);
+            state.mapEngine.addAnswerMarker(item);
 
             // 动画：标签飞到地图上的目标位置（屏幕坐标）
             // 使用 SVG 的 CTM 矩阵将 SVG 内部坐标精确转换为屏幕坐标
@@ -978,7 +1352,7 @@
         function useHint() {
             if (!state.isPlaying || state.hintsUsed >= state.hintsMax) return;
 
-            // 找到一个未放置的项，显示其 DropZone
+            // 按顺序找到一个未放置的项
             const unplaced = state.items.find(i => !state.placedIds.has(i.id));
             if (!unplaced) return;
 
@@ -986,11 +1360,63 @@
             const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
             state.score = Math.max(0, state.score + scoreCfg.hint);
 
-            // 高亮目标区域 3 秒
+            // 高亮目标区域 3 秒（兼容点、连续线、范围三种方式）
             const dropZone = els.mapSvg.querySelector(`.drop-zone[data-id="${unplaced.id}"]`);
             if (dropZone) {
+                const dzLayer = state.mapEngine.layers.dropZones;
+                const dzLayerHidden = dzLayer.style.display === 'none';
+                if (dzLayerHidden) dzLayer.style.display = '';
+                dropZone.style.display = '';
                 dropZone.classList.add('visible');
-                setTimeout(() => dropZone.classList.remove('visible'), 3000);
+                setTimeout(() => {
+                    dropZone.classList.remove('visible');
+                    if (dzLayerHidden) dzLayer.style.display = 'none';
+                }, 3000);
+            } else if (unplaced.points) {
+                const lineLayer = state.mapEngine.layers.lines;
+                const lineLayerHidden = lineLayer.style.display === 'none';
+                if (lineLayerHidden) lineLayer.style.display = '';
+
+                const lineItem = els.mapSvg.querySelector(`.line-item[data-id="${unplaced.id}"]`);
+                if (lineItem) {
+                    lineItem.style.display = '';
+                    const polyline = lineItem.querySelector('.line-polyline');
+                    if (polyline) {
+                        polyline.classList.add('hint-highlight');
+                        setTimeout(() => {
+                            polyline.classList.remove('hint-highlight');
+                            if (lineLayerHidden) lineLayer.style.display = 'none';
+                        }, 3000);
+                    } else if (lineLayerHidden) {
+                        setTimeout(() => lineLayer.style.display = 'none', 3000);
+                    }
+                }
+            } else if (unplaced.boundary || unplaced.center) {
+                const regionLayer = state.mapEngine.layers.regions;
+                const regionLayerHidden = regionLayer.style.display === 'none';
+                if (regionLayerHidden) regionLayer.style.display = '';
+
+                const regionItem = els.mapSvg.querySelector(`.region-item[data-id="${unplaced.id}"]`);
+                if (regionItem) {
+                    regionItem.style.display = '';
+                    const boundary = regionItem.querySelector('.region-boundary');
+                    if (boundary) {
+                        boundary.classList.add('hint-highlight');
+                        setTimeout(() => {
+                            boundary.classList.remove('hint-highlight');
+                            if (regionLayerHidden) regionLayer.style.display = 'none';
+                        }, 3000);
+                    } else if (regionLayerHidden) {
+                        setTimeout(() => regionLayer.style.display = 'none', 3000);
+                    }
+                }
+            }
+
+            // 左侧待标注栏同步高亮对应标签
+            const labelEl = document.querySelector(`.drag-label[data-id="${unplaced.id}"]`);
+            if (labelEl) {
+                labelEl.classList.add('label-hint-highlight');
+                setTimeout(() => labelEl.classList.remove('label-hint-highlight'), 3000);
             }
 
             showToast('已提示一个目标位置 -' + Math.abs(scoreCfg.hint) + '分', 'info');
@@ -1022,7 +1448,7 @@
             document.getElementById('editorBtn').classList.add('active');
 
             // 显示所有图层方便采集
-            state.layerManager.setStates({ base: true, grid: true, mountains: false, regions: false, dropZones: false, editor: true });
+            state.layerManager.setStates({ base: true, mountains: false, regions: false, lines: false, dropZones: false, editor: true });
 
             // 加载已保存的采集点并同步到待标注栏
             loadEditorStorage();
@@ -1031,6 +1457,55 @@
             syncEditorToSidebar();
             setupDragAndDrop();
             bindEditorEvents();
+            bindCalibrationEvents();
+
+            // 面板收起/展开
+            const panelToggle = document.getElementById('editorPanelToggle');
+            const editorPanel = document.getElementById('editorPanel');
+            panelToggle.addEventListener('click', () => {
+                editorPanel.classList.toggle('collapsed');
+                panelToggle.textContent = editorPanel.classList.contains('collapsed') ? '⬅' : '⬇';
+            });
+
+            // 初始化编辑器标签页状态
+            state.editorTab = 'collect';
+            document.getElementById('editorCollectPanel').style.display = '';
+            document.getElementById('editorCalibratePanel').style.display = 'none';
+            document.querySelectorAll('#editorTabs .editor-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('#editorTabs .editor-tab[data-tab="collect"]').classList.add('active');
+
+            // 标签页切换
+            document.querySelectorAll('#editorTabs .editor-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('#editorTabs .editor-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabName = tab.dataset.tab;
+                    state.editorTab = tabName;
+
+                    document.getElementById('editorCollectPanel').style.display = tabName === 'collect' ? '' : 'none';
+                    document.getElementById('editorCalibratePanel').style.display = tabName === 'calibrate' ? '' : 'none';
+
+                    if (tabName === 'calibrate') {
+                        setCalibrationCanvas(true);
+                        const currentLayerId = document.getElementById('calibrationLayerSelect').value;
+                        state.overlayEngine.setVisible('mountainBlank', currentLayerId === 'mountainBlank');
+                        state.overlayEngine.setVisible('terrainRegion', currentLayerId === 'terrainRegion');
+                        state.mapEngine.clearEditorMarkers();
+                        refreshCalibrationHandles();
+                        els.mapContainer.classList.add('calibration-mode');
+                        document.getElementById('mapMain').classList.add('calibration-mode');
+                    } else {
+                        setCalibrationCanvas(false);
+                        state.overlayEngine.setVisible('mountainBlank', false);
+                        state.overlayEngine.setVisible('terrainRegion', false);
+                        if (els.handleContainer) els.handleContainer.innerHTML = '';
+                        state.mapEngine.clearEditorMarkers();
+                        refreshEditorVisuals();
+                        els.mapContainer.classList.remove('calibration-mode');
+                        document.getElementById('mapMain').classList.remove('calibration-mode');
+                    }
+                });
+            });
 
             // 隐藏已自动化的加载测试按钮
             const editorTestBtn = document.getElementById('editorTestBtn');
@@ -1044,28 +1519,77 @@
             const editorCoords = document.getElementById('editorCoords');
             const editorAddBtn = document.getElementById('editorAddBtn');
             const editorFinishBoundaryBtn = document.getElementById('editorFinishBoundaryBtn');
+            const editorFinishLineBtn = document.getElementById('editorFinishLineBtn');
             const editorExportBtn = document.getElementById('editorExportBtn');
             const editorTestBtn = document.getElementById('editorTestBtn');
+            const editorUndoBtn = document.getElementById('editorUndoBtn');
             const editorClearBtn = document.getElementById('editorClearBtn');
             const editorList = document.getElementById('editorList');
 
-            // 点击地图采集坐标
+            // 点击地图采集坐标（点击空白处添加，点击已有采集点/预览标记删除）
             els.mapSvg.addEventListener('pointerdown', (e) => {
                 if (state.mode !== 'editor') return;
+                if (state.editorTab === 'calibrate') return;
                 const pos = state.mapEngine.screenToSvg(e.clientX, e.clientY);
-                editorCoords.value = `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
-
+                const clickThreshold = 25;
                 const type = editorType.value;
 
+                // 1. 先检查是否点击了已保存的采集点、边界点或线型
+                const clicked = findEditorItemAt(pos.x, pos.y, clickThreshold);
+                if (clicked) {
+                    pushUndo();
+                    deleteEditorItem(clicked);
+                    return;
+                }
+
+                // 2. 检查是否点击了尚未保存的预览标记（单点/边界点）
+                const previewRemoved = removePreviewMarkerAt(pos.x, pos.y, clickThreshold);
+                if (previewRemoved) {
+                    const coordVal = document.getElementById('editorCoords').value;
+                    const previewPos = parseCoords(coordVal);
+                    if (previewPos) {
+                        const dist = Math.sqrt((pos.x - previewPos.x) ** 2 + (pos.y - previewPos.y) ** 2);
+                        if (dist <= clickThreshold) {
+                            document.getElementById('editorCoords').value = '';
+                        }
+                    }
+                    showToast('已取消预览标记', 'info');
+                    return;
+                }
+
+                // 3. 线型模式：检查是否点击了预览顶点
+                if (type === 'line') {
+                    const removedIdx = removePreviewLineVertexAt(pos.x, pos.y, clickThreshold);
+                    if (removedIdx >= 0) {
+                        state.editorLinePoints.splice(removedIdx, 1);
+                        refreshLinePreview();
+                        editorCoords.value = state.editorLinePoints.map(p => `${p.x},${p.y}`).join(' | ');
+                        if (state.editorLinePoints.length < 2) editorFinishLineBtn.style.display = 'none';
+                        showToast('已删除线型顶点', 'info');
+                        return;
+                    }
+                }
+
+                // 4. 添加新点（压入撤销栈后修改预览状态）
+                editorCoords.value = `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
+                const radius = parseInt(document.getElementById('editorRadius').value) || (type === 'mountain' ? 50 : 80);
+
                 if (type === 'mountain' || type === 'region-center') {
+                    pushUndo();
                     state.mapEngine.addEditorMarker(pos.x, pos.y, editorName.value || '未命名');
-                    // 预览 dropZone
-                    state.mapEngine.addEditorDropZone(pos.x, pos.y, type === 'mountain' ? 50 : 80, '预览范围');
+                    state.mapEngine.addEditorDropZone(pos.x, pos.y, radius, 'R=' + radius);
                 } else if (type === 'region-boundary') {
+                    pushUndo();
                     state.editorBoundaryPoints.push({ x: Math.round(pos.x), y: Math.round(pos.y) });
                     state.mapEngine.addEditorMarker(pos.x, pos.y, 'B' + state.editorBoundaryPoints.length);
                     editorCoords.value = state.editorBoundaryPoints.map(p => `${p.x},${p.y}`).join(' | ');
                     editorFinishBoundaryBtn.style.display = '';
+                } else if (type === 'line') {
+                    pushUndo();
+                    state.editorLinePoints.push({ x: Math.round(pos.x), y: Math.round(pos.y) });
+                    refreshLinePreview();
+                    editorCoords.value = state.editorLinePoints.map(p => `${p.x},${p.y}`).join(' | ');
+                    if (state.editorLinePoints.length >= 2) editorFinishLineBtn.style.display = '';
                 }
             });
 
@@ -1073,10 +1597,23 @@
             editorType.addEventListener('change', () => {
                 state.editorCurrentType = editorType.value;
                 state.editorBoundaryPoints = [];
+                state.editorLinePoints = [];
                 editorCoords.value = '';
                 editorFinishBoundaryBtn.style.display =
                     editorType.value === 'region-boundary' ? '' : 'none';
+                editorFinishLineBtn.style.display =
+                    editorType.value === 'line' ? '' : 'none';
+                // 根据类型设置默认范围半径，并控制半径输入框显隐
+                const editorRadiusRow = document.getElementById('editorRadiusRow');
+                if (editorType.value === 'line' || editorType.value === 'region-boundary') {
+                    editorRadiusRow.style.display = 'none';
+                } else {
+                    editorRadiusRow.style.display = '';
+                    document.getElementById('editorRadius').value =
+                        editorType.value === 'mountain' ? 50 : 80;
+                }
                 cancelEditorEdit();
+                refreshEditorVisuals(); // 清除线型预览
             });
 
             // 添加/更新按钮
@@ -1091,21 +1628,24 @@
                 const item = {
                     id: pinyinId(name),
                     name: name,
-                    description: editorDesc.value.trim()
+                    description: editorDesc.value.trim(),
+                    targetLevel: document.getElementById('editorTargetLevel').value
                 };
+                const radius = parseInt(document.getElementById('editorRadius').value) || (type === 'mountain' ? 50 : 80);
 
+                pushUndo();
                 if (type === 'mountain') {
                     const coords = parseCoords(editorCoords.value);
                     if (!coords) return alert('请先点击地图采集坐标');
                     item.point = coords;
-                    item.dropRadius = 50;
+                    item.dropRadius = radius;
                     item.labelPosition = { x: coords.x, y: coords.y - 20 };
                     saveEditorItem('mountain', item);
                 } else if (type === 'region-center') {
                     const coords = parseCoords(editorCoords.value);
                     if (!coords) return alert('请先点击地图采集坐标');
                     item.center = coords;
-                    item.dropRadius = 80;
+                    item.dropRadius = radius;
                     item.labelPosition = { x: coords.x, y: coords.y };
                     item.boundary = [];
                     saveEditorItem('region', item);
@@ -1115,11 +1655,21 @@
                     }
                     item.boundary = [...state.editorBoundaryPoints];
                     item.center = calcCentroid(state.editorBoundaryPoints);
-                    item.dropRadius = 80;
+                    item.dropRadius = radius;
                     item.labelPosition = { x: item.center.x, y: item.center.y };
                     saveEditorItem('region', item);
                     state.editorBoundaryPoints = [];
                     editorFinishBoundaryBtn.style.display = 'none';
+                } else if (type === 'line') {
+                    if (state.editorLinePoints.length < 2) {
+                        return alert('线型至少需要2个点');
+                    }
+                    item.points = [...state.editorLinePoints];
+                    item.dropRadius = radius;
+                    item.labelPosition = { x: item.points[0].x, y: item.points[0].y - 20 };
+                    saveEditorItem('line', item);
+                    state.editorLinePoints = [];
+                    editorFinishLineBtn.style.display = 'none';
                 }
 
                 editorName.value = '';
@@ -1128,6 +1678,7 @@
                 cancelEditorEdit();
                 renderEditorList();
                 syncEditorToSidebar();
+                refreshEditorVisuals();
             });
 
             // 完成边界按钮
@@ -1135,11 +1686,23 @@
                 editorAddBtn.click();
             });
 
+            // 完成线型按钮
+            editorFinishLineBtn.addEventListener('click', () => {
+                editorAddBtn.click();
+            });
+
+            // 撤销按钮
+            editorUndoBtn.addEventListener('click', () => {
+                undo();
+            });
+
             // 清空全部
             editorClearBtn.addEventListener('click', () => {
                 if (!confirm('确定清空所有采集点吗？')) return;
+                pushUndo();
                 state.editorItems = [];
                 state.editorBoundaryPoints = [];
+                state.editorLinePoints = [];
                 state.mapEngine.clearEditorMarkers();
                 saveEditorStorage();
                 cancelEditorEdit();
@@ -1147,24 +1710,262 @@
                 syncEditorToSidebar();
             });
 
-            // 导出 JSON
+            // 导出 JS 数据文件（兼容 file:// 协议，替换 data/ 目录下原文件即可）
             editorExportBtn.addEventListener('click', () => {
                 const mountains = state.editorItems
                     .filter(i => i.type === 'mountain')
+                    .map(i => i.data);
+                const lines = state.editorItems
+                    .filter(i => i.type === 'line')
                     .map(i => i.data);
                 const regions = state.editorItems
                     .filter(i => i.type === 'region')
                     .map(i => i.data);
 
-                if (mountains.length) exportJSON(mountains, 'mountains.json');
-                if (regions.length) exportJSON(regions, 'terrain-regions.json');
+                let exported = false;
+                if (mountains.length) {
+                    exportJSData(mountains, 'mountains.js', 'mountains');
+                    exported = true;
+                }
+                if (lines.length) {
+                    exportJSData(lines, 'lines.js', 'lines');
+                    exported = true;
+                }
+                if (regions.length) {
+                    exportJSData(regions, 'terrain-regions.js', 'regions');
+                    exported = true;
+                }
 
-                if (!mountains.length && !regions.length) {
+                if (!exported) {
                     alert('没有数据可导出');
                 } else {
-                    showToast('JSON 已导出到下载目录', 'success');
+                    showToast('JS 数据文件已导出到下载目录，请覆盖到项目 data/ 文件夹下', 'success', 4000);
                 }
             });
+        }
+
+        /**
+         * 计算点 (px,py) 到线段 AB 的最短距离
+         */
+        function pointToSegmentDist(px, py, a, b) {
+            const dx = b.x - a.x, dy = b.y - a.y;
+            if (dx === 0 && dy === 0) return Math.sqrt((px - a.x) ** 2 + (py - a.y) ** 2);
+            let t = ((px - a.x) * dx + (py - a.y) * dy) / (dx * dx + dy * dy);
+            t = Math.max(0, Math.min(1, t));
+            const nx = a.x + t * dx, ny = a.y + t * dy;
+            return Math.sqrt((px - nx) ** 2 + (py - ny) ** 2);
+        }
+
+        /**
+         * 删除线型预览中的某个顶点（点击 editor-layer 上的预览顶点时触发）
+         * @returns {number} 删除的顶点索引，未找到返回 -1
+         */
+        function removePreviewLineVertexAt(x, y, threshold) {
+            const editorLayer = state.mapEngine.layers.editor;
+            const vertices = Array.from(editorLayer.querySelectorAll('.editor-polyline-vertex'));
+            for (let i = 0; i < vertices.length; i++) {
+                const cx = parseFloat(vertices[i].getAttribute('cx'));
+                const cy = parseFloat(vertices[i].getAttribute('cy'));
+                const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+                if (dist <= threshold) return i;
+            }
+            return -1;
+        }
+
+        /**
+         * 根据当前 editorLinePoints 重新绘制线型预览
+         */
+        function refreshLinePreview() {
+            const editorLayer = state.mapEngine.layers.editor;
+            editorLayer.querySelectorAll('.editor-polyline-group').forEach(g => g.remove());
+            if (state.editorLinePoints.length >= 1) {
+                state.mapEngine.addEditorPolyline(state.editorLinePoints, editorName.value || '未命名');
+            }
+        }
+
+        // ============================================================
+        // 撤销栈
+        // ============================================================
+
+        /**
+         * 压入撤销栈（在修改 editorItems 或预览点前调用）
+         * 快照同时保存 editorItems、线型预览点、边界预览点
+         */
+        function pushUndo() {
+            const snapshot = {
+                items: JSON.parse(JSON.stringify(state.editorItems)),
+                linePoints: JSON.parse(JSON.stringify(state.editorLinePoints)),
+                boundaryPoints: JSON.parse(JSON.stringify(state.editorBoundaryPoints))
+            };
+            state.undoStack.push(snapshot);
+            if (state.undoStack.length > 50) state.undoStack.shift(); // 限制栈深度
+        }
+
+        /**
+         * 撤销上一步操作
+         * 恢复到栈顶快照的 editorItems 和预览点状态
+         */
+        function undo() {
+            if (state.undoStack.length === 0) {
+                showToast('没有可撤销的操作', 'info');
+                return;
+            }
+            const snapshot = state.undoStack.pop();
+            state.editorItems = snapshot.items;
+            state.editorLinePoints = snapshot.linePoints || [];
+            state.editorBoundaryPoints = snapshot.boundaryPoints || [];
+            state.editorEditingIdx = -1;
+            saveEditorStorage();
+            refreshEditorVisuals();
+            refreshLinePreview();
+            renderEditorList();
+            syncEditorToSidebar();
+            cancelEditorEdit();
+
+            // 恢复预览 UI 状态
+            const editorFinishLineBtn = document.getElementById('editorFinishLineBtn');
+            const editorFinishBoundaryBtn = document.getElementById('editorFinishBoundaryBtn');
+            const editorCoords = document.getElementById('editorCoords');
+            if (editorFinishLineBtn) editorFinishLineBtn.style.display = state.editorLinePoints.length >= 2 ? '' : 'none';
+            if (editorFinishBoundaryBtn) editorFinishBoundaryBtn.style.display = state.editorBoundaryPoints.length >= 3 ? '' : 'none';
+            if (state.editorLinePoints.length && editorCoords) {
+                editorCoords.value = state.editorLinePoints.map(p => `${p.x},${p.y}`).join(' | ');
+            } else if (state.editorBoundaryPoints.length && editorCoords) {
+                editorCoords.value = state.editorBoundaryPoints.map(p => `${p.x},${p.y}`).join(' | ');
+            } else if (editorCoords) {
+                editorCoords.value = '';
+            }
+
+            showToast('已撤销上一步', 'success');
+        }
+
+        // 全局快捷键监听
+        document.addEventListener('keydown', (e) => {
+            if (state.mode !== 'editor') return;
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+        });
+
+        /**
+         * 查找点击位置附近的已有采集点
+         * 检测阈值优先使用采集点自身的 dropRadius（范围圈内点击都算命中），
+         * 边界点使用固定小阈值避免误触
+         * @returns {Object|null} { idx, isBoundary, boundaryIdx, isLineVertex, vertexIdx }
+         */
+        function findEditorItemAt(x, y, baseThreshold) {
+            for (let i = 0; i < state.editorItems.length; i++) {
+                const wrapper = state.editorItems[i];
+                const d = wrapper.data;
+                if (wrapper.type === 'mountain' && d.point) {
+                    const dist = Math.sqrt((x - d.point.x) ** 2 + (y - d.point.y) ** 2);
+                    const threshold = Math.max(baseThreshold, d.dropRadius || baseThreshold);
+                    if (dist <= threshold) return { idx: i };
+                } else if (wrapper.type === 'line' && d.points && d.points.length) {
+                    // 线型顶点检测
+                    for (let j = 0; j < d.points.length; j++) {
+                        const p = d.points[j];
+                        const dist = Math.sqrt((x - p.x) ** 2 + (y - p.y) ** 2);
+                        if (dist <= baseThreshold) return { idx: i, isLineVertex: true, vertexIdx: j };
+                    }
+                    // 线段检测（点到线段距离）
+                    for (let j = 0; j < d.points.length - 1; j++) {
+                        const dist = pointToSegmentDist(x, y, d.points[j], d.points[j + 1]);
+                        if (dist <= baseThreshold) return { idx: i };
+                    }
+                } else if (wrapper.type === 'region') {
+                    if (d.boundary && d.boundary.length) {
+                        for (let j = 0; j < d.boundary.length; j++) {
+                            const bp = d.boundary[j];
+                            const dist = Math.sqrt((x - bp.x) ** 2 + (y - bp.y) ** 2);
+                            if (dist <= baseThreshold) return { idx: i, isBoundary: true, boundaryIdx: j };
+                        }
+                    }
+                    if (d.center) {
+                        const dist = Math.sqrt((x - d.center.x) ** 2 + (y - d.center.y) ** 2);
+                        const threshold = Math.max(baseThreshold, d.dropRadius || baseThreshold);
+                        if (dist <= threshold) return { idx: i };
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * 删除编辑器中的采集点（点击已有采集点时触发）
+         */
+        function deleteEditorItem(clicked) {
+            const wrapper = state.editorItems[clicked.idx];
+            if (!wrapper) return;
+
+            if (wrapper.type === 'line') {
+                // 点击线型任意位置（顶点或线段）→ 删除整条线
+                state.editorItems.splice(clicked.idx, 1);
+            } else if (clicked.isBoundary && wrapper.data.boundary) {
+                // 删除单个边界点
+                wrapper.data.boundary.splice(clicked.boundaryIdx, 1);
+                if (wrapper.data.boundary.length < 3) {
+                    // 边界点不足3个，删除整个区域
+                    if (!confirm('边界点不足3个，将删除整个地形区，确定吗？')) return;
+                    state.editorItems.splice(clicked.idx, 1);
+                } else {
+                    // 重新计算中心
+                    wrapper.data.center = calcCentroid(wrapper.data.boundary);
+                }
+            } else {
+                // 删除整个采集点
+                state.editorItems.splice(clicked.idx, 1);
+            }
+
+            saveEditorStorage();
+            refreshEditorVisuals();
+            renderEditorList();
+            syncEditorToSidebar();
+
+            // 如果正在编辑被删除的项，取消编辑状态
+            if (state.editorEditingIdx === clicked.idx) {
+                cancelEditorEdit();
+            } else if (state.editorEditingIdx > clicked.idx) {
+                state.editorEditingIdx--;
+            }
+
+            showToast('已删除采集点', 'success');
+        }
+
+        /**
+         * 删除尚未保存的预览标记（点击已添加但未保存的标记时触发）
+         * @param {number} x - SVG x 坐标
+         * @param {number} y - SVG y 坐标
+         * @param {number} threshold - 检测阈值（像素）
+         * @returns {boolean} 是否成功删除
+         */
+        function removePreviewMarkerAt(x, y, threshold) {
+            const editorLayer = state.mapEngine.layers.editor;
+            let removed = false;
+
+            // 先移除匹配的 editor-marker
+            editorLayer.querySelectorAll('.editor-marker').forEach(marker => {
+                const cx = parseFloat(marker.getAttribute('cx'));
+                const cy = parseFloat(marker.getAttribute('cy'));
+                const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+                if (dist <= threshold) {
+                    marker.closest('g').remove();
+                    removed = true;
+                }
+            });
+
+            // 同时移除同位置的 editor-drop-zone（预览范围圈）
+            editorLayer.querySelectorAll('.editor-drop-zone').forEach(dz => {
+                const cx = parseFloat(dz.getAttribute('cx'));
+                const cy = parseFloat(dz.getAttribute('cy'));
+                const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+                if (dist <= threshold) {
+                    dz.closest('g').remove();
+                }
+            });
+
+            return removed;
         }
 
         /** 保存或更新编辑器项 */
@@ -1175,6 +1976,27 @@
                 state.editorItems.push({ type, data: item });
             }
             saveEditorStorage();
+        }
+
+        /**
+         * 将数据导出为 JS 全局变量格式的文件并触发下载
+         * @param {Array} data - 数据数组
+         * @param {string} filename - 下载文件名
+         * @param {string} globalKey - window.GEO_DATA 下的属性名
+         */
+        function exportJSData(data, filename, globalKey) {
+            const content = `window.GEO_DATA = window.GEO_DATA || {};\nwindow.GEO_DATA.${globalKey} = ${JSON.stringify(data, null, 2)};\n`;
+            const blob = new Blob([content], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
         }
 
         /** 进入编辑某项的状态 */
@@ -1193,6 +2015,11 @@
             if (wrapper.type === 'mountain') {
                 editorType.value = 'mountain';
                 editorCoords.value = `${d.point.x}, ${d.point.y}`;
+            } else if (wrapper.type === 'line') {
+                editorType.value = 'line';
+                state.editorLinePoints = [...d.points];
+                editorCoords.value = d.points.map(p => `${p.x},${p.y}`).join(' | ');
+                document.getElementById('editorFinishLineBtn').style.display = '';
             } else if (wrapper.type === 'region') {
                 if (d.boundary && d.boundary.length) {
                     editorType.value = 'region-boundary';
@@ -1206,6 +2033,14 @@
             }
             editorName.value = d.name;
             editorDesc.value = d.description || '';
+            document.getElementById('editorTargetLevel').value = d.targetLevel || 'mountains';
+            const editorRadiusRow = document.getElementById('editorRadiusRow');
+            if (wrapper.type === 'line' || (wrapper.type === 'region' && d.boundary && d.boundary.length)) {
+                editorRadiusRow.style.display = 'none';
+            } else {
+                editorRadiusRow.style.display = '';
+                document.getElementById('editorRadius').value = d.dropRadius || (wrapper.type === 'mountain' ? 50 : 80);
+            }
             editorAddBtn.textContent = '更新';
         }
 
@@ -1224,22 +2059,21 @@
 
             // 清空地图旧标记
             state.mapEngine.layers.mountains.innerHTML = '';
+            state.mapEngine.layers.lines.innerHTML = '';
             state.mapEngine.layers.regions.innerHTML = '';
             state.mapEngine.clearDropZones();
 
-            // 按类型渲染
-            const hasMountains = state.editorItems.some(w => w.type === 'mountain');
-            const hasRegions = state.editorItems.some(w => w.type === 'region');
-            state.level = hasMountains && !hasRegions ? 'mountains' : 'terrain-regions';
-            els.levelName.textContent = hasMountains && !hasRegions ? '山脉标注（测试）' : '地形区标注（测试）';
-
+            // 按数据字段类型渲染
             gameItems.forEach(item => {
                 if (item.point) {
-                    state.mapEngine.addMountainMarker(item, showDescription);
-                } else if (item.center) {
-                    state.mapEngine.addRegionBoundary(item, showDescription);
+                    state.mapEngine.addMountainMarker(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'mountain');
+                } else if (item.points && item.points.length) {
+                    state.mapEngine.addPolyline(item, showDescription, true);
+                } else if (item.center || (item.boundary && item.boundary.length)) {
+                    state.mapEngine.addRegionBoundary(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'region');
                 }
-                state.mapEngine.addDropZone(item, item.point ? 'mountain' : 'region');
             });
 
             // 显示侧边栏并生成标签
@@ -1288,11 +2122,18 @@
                 const div = document.createElement('div');
                 div.className = 'editor-point-item';
                 const d = item.data;
-                const coordInfo = item.type === 'mountain'
-                    ? `(${d.point.x}, ${d.point.y})`
-                    : `(${d.center.x}, ${d.center.y})`;
+                let coordInfo = '';
+                if (item.type === 'mountain' && d.point) {
+                    coordInfo = `(${d.point.x}, ${d.point.y})`;
+                } else if (item.type === 'line' && d.points) {
+                    coordInfo = `(${d.points.length}个点)`;
+                } else if (d.center) {
+                    coordInfo = `(${d.center.x}, ${d.center.y})`;
+                }
+                const radiusInfo = d.dropRadius ? ` R=${d.dropRadius}` : '';
+                const targetInfo = d.targetLevel ? ` →${d.targetLevel === 'mountains' ? '山脉' : '地形区'}` : '';
                 div.innerHTML = `
-                    <span>[${item.type}] ${d.name} <small style="color:#999;">${coordInfo}</small></span>
+                    <span>[${item.type}] ${d.name} <small style="color:#999;">${coordInfo}${radiusInfo}${targetInfo}</small></span>
                     <div style="display:flex;gap:4px;">
                         <button class="btn-edit" data-idx="${idx}" title="编辑">编辑</button>
                         <button class="btn-delete" data-idx="${idx}" title="删除">删除</button>
@@ -1304,6 +2145,7 @@
             editorList.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const idx = parseInt(btn.dataset.idx);
+                    pushUndo();
                     state.editorItems.splice(idx, 1);
                     saveEditorStorage();
                     refreshEditorVisuals();
@@ -1329,16 +2171,247 @@
                 if (item.type === 'mountain' && d.point) {
                     state.mapEngine.addEditorMarker(d.point.x, d.point.y, d.name);
                     state.mapEngine.addEditorDropZone(d.point.x, d.point.y, d.dropRadius || 50, 'R=' + (d.dropRadius || 50));
+                } else if (item.type === 'line' && d.points && d.points.length >= 2) {
+                    state.mapEngine.addEditorPolyline(d.points, d.name);
                 } else if (item.type === 'region' && d.boundary && d.boundary.length) {
                     d.boundary.forEach((p, i) => state.mapEngine.addEditorMarker(p.x, p.y, 'B' + (i + 1)));
                     if (d.center) {
                         state.mapEngine.addEditorMarker(d.center.x, d.center.y, d.name);
-                        state.mapEngine.addEditorDropZone(d.center.x, d.center.y, d.dropRadius || 80, 'R=' + (d.dropRadius || 80));
                     }
                 } else if (item.type === 'region' && d.center) {
                     state.mapEngine.addEditorMarker(d.center.x, d.center.y, d.name);
                     state.mapEngine.addEditorDropZone(d.center.x, d.center.y, d.dropRadius || 80, 'R=' + (d.dropRadius || 80));
                 }
+            });
+        }
+
+        function updateCalibrationSliders() {
+            const layerId = document.getElementById('calibrationLayerSelect').value;
+            const data = state.overlayEngine.getCalibrationData()[layerId];
+            if (!data) return;
+            document.getElementById('calibrationX').value = data.x;
+            document.getElementById('calibrationY').value = data.y;
+            document.getElementById('calibrationW').value = data.width;
+            document.getElementById('calibrationH').value = data.height;
+            document.getElementById('calibrationOpacity').value = data.opacity;
+            document.getElementById('calibrationScale').value = data.scale;
+            document.getElementById('calibrationXVal').textContent = Number(data.x).toFixed(1);
+            document.getElementById('calibrationYVal').textContent = Number(data.y).toFixed(1);
+            document.getElementById('calibrationWVal').textContent = Number(data.width).toFixed(1);
+            document.getElementById('calibrationHVal').textContent = Number(data.height).toFixed(1);
+            document.getElementById('calibrationOpacityVal').textContent = Number(data.opacity).toFixed(2);
+            document.getElementById('calibrationScaleVal').textContent = Number(data.scale).toFixed(2);
+        }
+
+        function refreshCalibrationHandles() {
+            if (state.mode !== 'editor' || state.editorTab !== 'calibrate') return;
+            if (els.handleContainer) els.handleContainer.innerHTML = '';
+            state.mapEngine.clearEditorMarkers();
+            const showHandles = document.getElementById('calibrationShowHandles').checked;
+            if (!showHandles) return;
+            const layerId = document.getElementById('calibrationLayerSelect').value;
+            const handlesLayer = state.overlayEngine.createCalibrationHandles(layerId);
+            if (handlesLayer && els.handleContainer) {
+                els.handleContainer.appendChild(handlesLayer);
+                handlesLayer.querySelectorAll('.warp-handle-group').forEach(g => {
+                    g.addEventListener('pointerdown', onCalibrationHandlePointerDown);
+                });
+            }
+        }
+
+        function onCalibrationHandlePointerDown(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const handleGroup = e.target.closest('.warp-handle-group');
+            if (!handleGroup) return;
+            const handleKey = handleGroup.dataset.handleKey;
+            const layerId = document.getElementById('calibrationLayerSelect').value;
+
+            // 使用 overlay 容器像素坐标，避免 SVG preserveAspectRatio 带来的转换误差
+            const containerRect = els.overlayContainer.getBoundingClientRect();
+            const pctStart = {
+                x: ((e.clientX - containerRect.left) / containerRect.width) * 100,
+                y: ((e.clientY - containerRect.top) / containerRect.height) * 100
+            };
+            state.calibrationDrag = {
+                handleKey,
+                layerId,
+                lastPoint: pctStart
+            };
+
+            function onMove(ev) {
+                if (!state.calibrationDrag) return;
+                const curContainerRect = els.overlayContainer.getBoundingClientRect();
+                const pctCurrent = {
+                    x: ((ev.clientX - curContainerRect.left) / curContainerRect.width) * 100,
+                    y: ((ev.clientY - curContainerRect.top) / curContainerRect.height) * 100
+                };
+                const d = state.calibrationDrag;
+
+                if (d.handleKey === 'center') {
+                    const dx = pctCurrent.x - d.lastPoint.x;
+                    const dy = pctCurrent.y - d.lastPoint.y;
+                    state.overlayEngine.updateViewportFromDrag(d.layerId, dx, dy);
+                    updateCalibrationSliders();
+                } else {
+                    const options = {
+                        sensitivity: ev.altKey ? 0.18 : (ev.shiftKey ? 1.0 : 0.35)
+                    };
+                    // 将容器百分比坐标转换为 warp 单位（图层自身尺寸的百分比）
+                    const layerData = state.overlayEngine.getCalibrationData()[d.layerId];
+                    const ls = Number.isFinite(layerData.scale) ? layerData.scale : 1;
+                    const scaledW = layerData.width * ls;
+                    const scaledH = layerData.height * ls;
+                    const warpLast = {
+                        x: d.lastPoint.x * 100 / scaledW,
+                        y: d.lastPoint.y * 100 / scaledH
+                    };
+                    const warpCurrent = {
+                        x: pctCurrent.x * 100 / scaledW,
+                        y: pctCurrent.y * 100 / scaledH
+                    };
+                    state.overlayEngine.updateWarpFromDrag(d.layerId, d.handleKey, warpLast, warpCurrent, options);
+                    refreshCalibrationHandles();
+                }
+                d.lastPoint = pctCurrent;
+            }
+
+            function onUp(ev) {
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup', onUp);
+                state.calibrationDrag = null;
+                refreshCalibrationHandles();
+            }
+
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup', onUp);
+        }
+
+        function bindCalibrationEvents() {
+            const layerSelect = document.getElementById('calibrationLayerSelect');
+            const xSlider = document.getElementById('calibrationX');
+            const ySlider = document.getElementById('calibrationY');
+            const wSlider = document.getElementById('calibrationW');
+            const hSlider = document.getElementById('calibrationH');
+            const opacitySlider = document.getElementById('calibrationOpacity');
+            const scaleSlider = document.getElementById('calibrationScale');
+            const showHandlesCheckbox = document.getElementById('calibrationShowHandles');
+            const resetLayerBtn = document.getElementById('calibrationResetLayerBtn');
+            const resetAllBtn = document.getElementById('calibrationResetAllBtn');
+            const exportBtn = document.getElementById('calibrationExportBtn');
+
+            function updateSliderValues() {
+                document.getElementById('calibrationXVal').textContent = Number(xSlider.value).toFixed(1);
+                document.getElementById('calibrationYVal').textContent = Number(ySlider.value).toFixed(1);
+                document.getElementById('calibrationWVal').textContent = Number(wSlider.value).toFixed(1);
+                document.getElementById('calibrationHVal').textContent = Number(hSlider.value).toFixed(1);
+                document.getElementById('calibrationOpacityVal').textContent = Number(opacitySlider.value).toFixed(2);
+                document.getElementById('calibrationScaleVal').textContent = Number(scaleSlider.value).toFixed(2);
+            }
+
+            function applySliders() {
+                const layerId = layerSelect.value;
+                state.overlayEngine.setCalibrationData(layerId, 'x', parseFloat(xSlider.value));
+                state.overlayEngine.setCalibrationData(layerId, 'y', parseFloat(ySlider.value));
+                state.overlayEngine.setCalibrationData(layerId, 'width', parseFloat(wSlider.value));
+                state.overlayEngine.setCalibrationData(layerId, 'height', parseFloat(hSlider.value));
+                state.overlayEngine.setCalibrationData(layerId, 'opacity', parseFloat(opacitySlider.value));
+                state.overlayEngine.setCalibrationData(layerId, 'scale', parseFloat(scaleSlider.value));
+                refreshCalibrationHandles();
+            }
+
+            // Initialize sliders with current data
+            const calData = state.overlayEngine.getCalibrationData();
+            const currentLayer = layerSelect.value;
+            if (calData[currentLayer]) {
+                const d = calData[currentLayer];
+                xSlider.value = d.x;
+                ySlider.value = d.y;
+                wSlider.value = d.width;
+                hSlider.value = d.height;
+                opacitySlider.value = d.opacity;
+                scaleSlider.value = d.scale;
+                updateSliderValues();
+            }
+
+            [xSlider, ySlider, wSlider, hSlider, opacitySlider, scaleSlider].forEach(slider => {
+                slider.addEventListener('input', () => {
+                    updateSliderValues();
+                    applySliders();
+                });
+            });
+
+            layerSelect.addEventListener('change', () => {
+                const layerId = layerSelect.value;
+                const data = state.overlayEngine.getCalibrationData()[layerId];
+                if (data) {
+                    xSlider.value = data.x;
+                    ySlider.value = data.y;
+                    wSlider.value = data.width;
+                    hSlider.value = data.height;
+                    opacitySlider.value = data.opacity;
+                    scaleSlider.value = data.scale;
+                    updateSliderValues();
+                }
+                // 校准模式下只展示当前选中的图层
+                if (state.editorTab === 'calibrate') {
+                    state.overlayEngine.setVisible('mountainBlank', layerId === 'mountainBlank');
+                    state.overlayEngine.setVisible('terrainRegion', layerId === 'terrainRegion');
+                }
+                refreshCalibrationHandles();
+            });
+
+            showHandlesCheckbox.addEventListener('change', () => {
+                refreshCalibrationHandles();
+            });
+
+            resetLayerBtn.addEventListener('click', () => {
+                const layerId = layerSelect.value;
+                state.overlayEngine.resetLayer(layerId);
+                const data = state.overlayEngine.getCalibrationData()[layerId];
+                if (data) {
+                    xSlider.value = data.x;
+                    ySlider.value = data.y;
+                    wSlider.value = data.width;
+                    hSlider.value = data.height;
+                    opacitySlider.value = data.opacity;
+                    scaleSlider.value = data.scale;
+                    updateSliderValues();
+                }
+                refreshCalibrationHandles();
+            });
+
+            resetAllBtn.addEventListener('click', () => {
+                if (!confirm('确定重置所有图层到默认状态吗？')) return;
+                state.overlayEngine.resetAll();
+                const layerId = layerSelect.value;
+                const data = state.overlayEngine.getCalibrationData()[layerId];
+                if (data) {
+                    xSlider.value = data.x;
+                    ySlider.value = data.y;
+                    wSlider.value = data.width;
+                    hSlider.value = data.height;
+                    opacitySlider.value = data.opacity;
+                    scaleSlider.value = data.scale;
+                    updateSliderValues();
+                }
+                refreshCalibrationHandles();
+            });
+
+            exportBtn.addEventListener('click', () => {
+                const content = state.overlayEngine.exportCalibration();
+                const blob = new Blob([content], { type: 'application/javascript' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'overlay-calibration.js';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                showToast('校准数据已导出', 'success');
             });
         }
 
@@ -1348,7 +2421,7 @@
         init();
 
         // 暴露内部接口供调试和自动化测试
-        window._game = { state, els, setupLevel, startGame, restartGame, endGame, showDescription, loadEditorItemsToGame, refreshEditorVisuals };
+        window._game = { state, els, setupLevel, startGame, restartGame, endGame, showDescription, loadEditorItemsToGame, refreshEditorVisuals, findEditorItemAt, deleteEditorItem, saveEditorItem, renderEditorList, syncEditorToSidebar, pushUndo, undo, refreshLinePreview };
     })();
     </script>
 </body>

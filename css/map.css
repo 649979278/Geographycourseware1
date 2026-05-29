@@ -149,10 +149,24 @@
     background: #e8e8e8;
 }
 
+.map-container.calibration-mode {
+    overflow: visible;
+}
+
+.map-container.calibration-mode .map-svg {
+    overflow: visible;
+}
+
+.map-main.calibration-mode {
+    overflow: auto;
+}
+
 .map-svg {
     width: 100%;
     height: 100%;
     display: block;
+    position: relative;
+    z-index: 3;
 }
 
 /* SVG 内部元素样式 */
@@ -242,6 +256,14 @@
     transition: opacity 0.3s ease;
 }
 
+/* 提示高亮：线型和地形区边界 */
+.hint-highlight {
+    stroke: #ff9800 !important;
+    stroke-width: 4 !important;
+    opacity: 1 !important;
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
 /* 编辑模式下的点击标记 */
 .editor-marker {
     fill: #e53935;
@@ -258,6 +280,226 @@
 }
 
 .editor-drop-zone {
+    pointer-events: none;
+}
+
+/* ============================================================
+   答案固定图层（不受开关控制，始终可见）
+   ============================================================ */
+.answers-layer {
+    pointer-events: none;
+}
+
+.answer-marker {
+    fill: #4caf50;
+    stroke: #fff;
+    stroke-width: 2;
+}
+
+.answer-label {
+    font-size: 30px;
+    font-weight: 700;
+    fill: #2e7d32;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(255,255,255,0.9);
+}
+
+.line-answer {
+    stroke: #4caf50;
+    stroke-width: 3;
+    fill: none;
+}
+
+.region-answer {
+    fill: rgba(76, 175, 80, 0.08);
+    stroke: #4caf50;
+    stroke-width: 2;
+}
+
+/* ============================================================
+   提示高亮样式增强
+   ============================================================ */
+
+/* 目标提示圈脉冲动画 */
+.drop-zone.visible {
+    opacity: 0.8;
+    animation: pulse-dropzone 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-dropzone {
+    from { stroke-width: 2; opacity: 0.5; }
+    to   { stroke-width: 6; opacity: 0.95; }
+}
+
+/* 左侧待标注栏提示高亮 */
+.label-hint-highlight {
+    background: #fff3e0 !important;
+    border-color: #ff9800 !important;
+    color: #e65100 !important;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.35);
+    animation: pulse-label 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-label {
+    from { box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.35); }
+    to   { box-shadow: 0 0 0 8px rgba(255, 152, 0, 0.55); }
+}
+
+/* ============================================================
+   底图与叠加图片
+   ============================================================ */
+
+.base-map-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.overlay-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.overlay-canvas {
+    display: block;
+    pointer-events: none;
+}
+
+.handle-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.calibration-handles-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 10;
+}
+
+.warp-handle-group {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    cursor: grab;
+    z-index: 11;
+}
+
+.warp-handle-group:active {
+    cursor: grabbing;
+}
+
+.warp-handle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff5722;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    pointer-events: none;
+    transition: transform 0.15s ease;
+}
+
+.warp-handle-group:hover .warp-handle {
+    transform: scale(1.2);
+}
+
+.warp-handle.center {
+    background: #2196f3;
+}
+
+/* ============================================================
+   编辑器标签切换
+   ============================================================ */
+
+.editor-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 8px;
+}
+
+.editor-tab {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    background: #f5f5f5;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--color-text-secondary);
+}
+
+.editor-tab:hover {
+    background: #e8e8e8;
+}
+
+.editor-tab.active {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+
+/* ============================================================
+   校准面板控件
+   ============================================================ */
+
+.calibration-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calibration-slider-row label {
+    width: 60px;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
+.calibration-slider-row input[type="range"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.calibration-value {
+    width: 40px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   Warp 控制点样式（轮廓线仍为 SVG，控制点已改为 HTML div）
+   ============================================================ */
+
+.warp-outline {
+    fill: none;
+    stroke: #ff5722;
+    stroke-width: 0.8;
+    stroke-dasharray: 2, 2;
     pointer-events: none;
 }
 

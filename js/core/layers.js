@@ -11,11 +11,13 @@
 function createLayerManager(mapEngine) {
     const layerStates = {
         base: true,
-        grid: true,
-        mountains: true,
-        regions: true,
+        mountains: false,
+        regions: false,
+        lines: false,
         dropZones: false,
-        editor: false
+        editor: false,
+        overlayMountain: false,
+        overlayRegion: false
     };
 
     /**
@@ -36,10 +38,24 @@ function createLayerManager(mapEngine) {
         const group = mapEngine.layers[layerName];
         if (group) {
             group.style.display = newState ? '' : 'none';
+
+            // 对数据图层，同时控制所有直接子元素的显示状态，
+            // 确保图层开关能真正显示/隐藏所有内容
+            if (['mountains', 'lines', 'regions', 'dropZones'].includes(layerName)) {
+                Array.from(group.children).forEach(child => {
+                    child.style.display = newState ? '' : 'none';
+                });
+            }
         }
 
         // 触发 UI 更新
         updateUI(layerName, newState);
+
+        // 山脉标记开关同时控制线型标记
+        if (layerName === 'mountains') {
+            toggle('lines', newState);
+        }
+
         return newState;
     }
 
