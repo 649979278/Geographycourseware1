@@ -12,6 +12,7 @@ window.GEO_DATA.mountains = [
     "labelPosition": {
       "x": 2377,
       "y": 622
-    }
+    },
+    "targetLevel": "mountains"
   }
 ];

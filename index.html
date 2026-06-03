@@ -25,19 +25,60 @@
             margin-bottom: 50px;
         }
 
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-decoration .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.06;
+        }
+
+        .bg-decoration .c1 {
+            width: 400px;
+            height: 400px;
+            background: #4caf50;
+            top: -100px;
+            right: -100px;
+        }
+
+        .bg-decoration .c2 {
+            width: 300px;
+            height: 300px;
+            background: #81c784;
+            bottom: -80px;
+            left: -80px;
+        }
+
+        .bg-decoration .c3 {
+            width: 180px;
+            height: 180px;
+            background: #a5d6a7;
+            top: 40%;
+            left: 10%;
+        }
+
         .module-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 0 20px;
+            position: relative;
+            z-index: 1;
         }
 
         .module-card {
             background: #fff;
-            border-radius: 16px;
-            padding: 32px 24px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border-radius: 24px;
+            padding: 56px 48px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
@@ -45,57 +86,122 @@
             flex-direction: column;
             align-items: center;
             border: 2px solid transparent;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #4caf50, #81c784, #4caf50);
         }
 
         .module-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.16);
             border-color: #4caf50;
         }
 
         .module-icon {
-            width: 72px;
-            height: 72px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            margin-bottom: 16px;
+            font-size: 48px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
         }
 
         .module-card h3 {
-            font-size: 22px;
-            margin-bottom: 8px;
-            color: #333;
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: #2c5f2d;
         }
 
         .module-card p {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .module-card .feature-list {
+            margin-top: 16px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .module-card .feature-list li {
+            list-style: none;
             font-size: 14px;
-            color: #777;
-            line-height: 1.5;
+            color: #555;
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .module-card .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
         }
 
         .module-card .badge {
-            margin-top: 12px;
-            padding: 4px 12px;
+            margin-top: 20px;
+            padding: 6px 18px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
         }
 
         .badge-priority {
-            background: #ffebee;
-            color: #c62828;
+            background: #e8f5e9;
+            color: #2c5f2d;
+            border: 1px solid #c8e6c9;
         }
 
         .badge-soon {
             background: #e3f2fd;
             color: #1565c0;
         }
+
+        .enter-btn {
+            margin-top: 24px;
+            padding: 12px 36px;
+            background: linear-gradient(135deg, #4caf50, #43a047);
+            color: #fff;
+            border: none;
+            border-radius: 28px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            pointer-events: none;
+        }
+
+        .module-card:hover .enter-btn {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.35);
+        }
     </style>
 </head>
 <body>
+    <div class="bg-decoration">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <div class="circle c3"></div>
+    </div>
+
     <div class="home-container">
         <h1 class="home-title">中国地理教学课件</h1>
         <p class="home-subtitle">拖拽互动 · 游戏练习 · 本地演示</p>
@@ -105,9 +211,15 @@
                 <div class="module-icon" style="background:#e8f5e9;">⛰️</div>
                 <h3>中国的地形</h3>
                 <p>标注23座主要山脉与14个主要地形区，了解中国地势分布</p>
-                <span class="badge badge-priority">优先开发</span>
+                <ul class="feature-list">
+                    <li>山脉名称与位置标注</li>
+                    <li>地形区轮廓识别</li>
+                    <li>阶梯分布互动练习</li>
+                </ul>
+                <button class="enter-btn">进入模块 →</button>
             </a>
 
+            <!--
             <a href="admin.html" class="module-card">
                 <div class="module-icon" style="background:#e3f2fd;">🗺️</div>
                 <h3>疆域与行政区划</h3>
@@ -128,6 +240,7 @@
                 <p>标注主要河流湖泊，了解流经省市与地形区</p>
                 <span class="badge badge-soon">即将推出</span>
             </a>
+            -->
         </div>
     </div>
 </body>
