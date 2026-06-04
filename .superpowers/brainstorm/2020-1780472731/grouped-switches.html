@@ -1,0 +1,88 @@
+<h2>图层开关 UI 方案对比</h2>
+<p class="subtitle">基于「分组互斥」策略的两种布局方向</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>方案 A：顶部精简 + 右侧抽屉面板</h3>
+      <p>顶部 toolbar 只保留「图层」按钮，点击展开右侧面板分组管理开关。</p>
+      <div class="mockup">
+        <div class="mockup-header">顶部 Toolbar（精简）</div>
+        <div class="mockup-body" style="padding:8px;display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;">← 返回首页</span>
+          <span style="font-weight:bold;">中国的地形</span>
+          <div class="toolbar-spacer"></div>
+          <button class="mock-button">🗺️ 图层</button>
+          <button class="mock-button">单人练习</button>
+          <button class="mock-button">双人PK</button>
+          <button class="mock-button">坐标采集</button>
+        </div>
+      </div>
+      <div class="mockup" style="margin-top:8px;">
+        <div class="mockup-header">右侧抽屉面板</div>
+        <div class="mockup-body" style="padding:12px;width:220px;">
+          <div style="font-weight:bold;margin-bottom:8px;font-size:13px;">基础要素（可多选）</div>
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;"><input type="checkbox"> 中国主要河流</label>
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;"><input type="checkbox"> 中国行政区界线</label>
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:12px;"><input type="checkbox"> 经纬网</label>
+          <div style="font-weight:bold;margin-bottom:8px;font-size:13px;">叠加要素（独立开关）</div>
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;"><input type="checkbox"> 中国山脉图</label>
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;"><input type="checkbox"> 行政区+省会+河流</label>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px solid #ddd;font-size:11px;color:#666;">
+            当前底图：<b>1-底图.png</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>方案 B：顶部直接分组排列</h3>
+      <p>开关直接在顶部 toolbar 分组展示，用视觉分隔区分不同组，更快捷。</p>
+      <div class="mockup">
+        <div class="mockup-header">顶部 Toolbar（展开）</div>
+        <div class="mockup-body" style="padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:12px;">← 返回首页</span>
+          <span style="font-weight:bold;">中国的地形</span>
+          <div style="width:1px;height:20px;background:#ccc;margin:0 4px;"></div>
+          <span style="font-size:11px;color:#888;">基础</span>
+          <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f5f5f5;border-radius:4px;font-size:12px;"><input type="checkbox"> 河流</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f5f5f5;border-radius:4px;font-size:12px;"><input type="checkbox"> 行政区</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f5f5f5;border-radius:4px;font-size:12px;"><input type="checkbox"> 经纬网</label>
+          <div style="width:1px;height:20px;background:#ccc;margin:0 4px;"></div>
+          <span style="font-size:11px;color:#888;">叠加</span>
+          <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#e8f5e9;border-radius:4px;font-size:12px;"><input type="checkbox"> 山脉</label>
+          <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#e8f5e9;border-radius:4px;font-size:12px;"><input type="checkbox"> 省会河流</label>
+          <div class="toolbar-spacer"></div>
+          <button class="mock-button">单人</button>
+          <button class="mock-button">PK</button>
+          <button class="mock-button">采集</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px;">
+  <h3>核心问题：基础要素与山脉开关的组合映射</h3>
+  <p>由于预合成图有限，当「基础要素组」不是纯底图时开启「山脉」开关，缺少对应图片。两种处理策略：</p>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="strict" onclick="toggleSelect(this)">
+      <div class="letter">1</div>
+      <div class="content">
+        <h4>严格降级</h4>
+        <p>山脉开关仅在基础要素全关时有效（展示10）。否则自动切换为「全部要素」(11)。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="merge" onclick="toggleSelect(this)">
+      <div class="letter">2</div>
+      <div class="content">
+        <h4>智能合并</h4>
+        <p>开启山脉时，如果基础要素有选中项，自动合并为全部要素(11)。关闭山脉时恢复之前的基础组合。</p>
+      </div>
+    </div>
+  </div>
+</div>

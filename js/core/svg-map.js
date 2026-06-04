@@ -7,7 +7,7 @@
 const MAP_CONFIG = {
     baseWidth: 2981,
     baseHeight: 2180,
-    baseImage: 'assets/maps/terrain-base.jpg',
+    baseImage: '地形区图片/第二批图片/1-底图.png',
     // 中国大致经纬度范围（用于绘制经纬网）
     lonRange: { min: 73, max: 135 },
     latRange: { min: 18, max: 54 },
@@ -409,10 +409,10 @@ function initSvgMap(svgSelector) {
      * @param {Array} points - [{x,y}, ...]
      * @param {string} label - 标签文本
      */
-    function addEditorPolyline(points, label) {
+    function addEditorPolyline(points, label, isPreview) {
         if (!points || points.length < 1) return null;
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.setAttribute('class', 'editor-polyline-group');
+        g.setAttribute('class', 'editor-polyline-group' + (isPreview ? ' editor-preview' : ''));
 
         // 绘制折线（至少2个点）
         if (points.length >= 2) {

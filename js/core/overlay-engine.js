@@ -231,6 +231,7 @@ function createOverlayEngine(config) {
     function loadOverlays(externalData) {
         const raw = externalData || {};
         state.data = {};
+        // 先加载默认图层
         Object.keys(defaultData).forEach(key => {
             const def = defaultData[key];
             const ext = raw[key] || {};
@@ -242,6 +243,23 @@ function createOverlayEngine(config) {
                 height: Number.isFinite(ext.height) ? ext.height : def.height,
                 opacity: Number.isFinite(ext.opacity) ? ext.opacity : def.opacity,
                 scale: Number.isFinite(ext.scale) ? ext.scale : def.scale,
+                warp: normalizeLayerWarp(ext.warp)
+            };
+            preloadImage(state.data[key].src);
+        });
+        // 再加载外部数据中新增的图层（如 adminOutline）
+        Object.keys(raw).forEach(key => {
+            if (state.data[key]) return; // 已处理过
+            const ext = raw[key];
+            if (!ext || !ext.src) return;
+            state.data[key] = {
+                src: ext.src,
+                x: Number.isFinite(ext.x) ? ext.x : 0,
+                y: Number.isFinite(ext.y) ? ext.y : 0,
+                width: Number.isFinite(ext.width) ? ext.width : 100,
+                height: Number.isFinite(ext.height) ? ext.height : 100,
+                opacity: Number.isFinite(ext.opacity) ? ext.opacity : 0.75,
+                scale: Number.isFinite(ext.scale) ? ext.scale : 1,
                 warp: normalizeLayerWarp(ext.warp)
             };
             preloadImage(state.data[key].src);
@@ -387,8 +405,9 @@ function createOverlayEngine(config) {
     function resetLayer(layerId) {
         if (!defaultData[layerId]) return;
         const def = defaultData[layerId];
+        const current = state.data[layerId] || {};
         state.data[layerId] = {
-            src: def.src,
+            src: current.src || def.src,
             x: def.x, y: def.y,
             width: def.width, height: def.height,
             opacity: def.opacity,

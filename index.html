@@ -243,5 +243,18 @@
             -->
         </div>
     </div>
+    <script src="data/mountains.js"></script>
+    <script src="data/terrain-regions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const geo = window.GEO_DATA || {};
+            const mountainCount = (geo.mountains || []).length;
+            const regionCount = (geo.regions || []).length;
+            const p = document.querySelector('.module-card p');
+            if (p) {
+                p.textContent = '标注' + mountainCount + '座主要山脉与' + regionCount + '个主要地形区，了解中国地势分布';
+            }
+        });
+    </script>
 </body>
 </html>

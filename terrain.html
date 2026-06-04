@@ -14,9 +14,7 @@
     <div class="map-toolbar" id="toolbar">
         <a class="home-link" href="index.html">← 返回首页</a>
         <span class="toolbar-title">中国的地形</span>
-        <label class="layer-toggle active" data-layer="base">
-            <input type="checkbox" checked> 底图
-        </label>
+        <button class="layer-drawer-toggle" id="layerDrawerToggle">🗺️ 图层</button>
         <label class="layer-toggle" data-layer="mountains" id="layerToggleMountains" style="display:none;">
             <input type="checkbox"> 山脉标记
         </label>
@@ -28,6 +26,9 @@
         </label>
         <label class="layer-toggle" data-layer="overlayRegion" id="layerToggleOverlayRegion">
             <input type="checkbox"> 地形图
+        </label>
+        <label class="layer-toggle" data-layer="overlayAdmin" id="layerToggleOverlayAdmin">
+            <input type="checkbox"> 政区轮廓图
         </label>
         <label class="layer-toggle" data-layer="dropZones">
             <input type="checkbox"> 目标提示
@@ -96,7 +97,7 @@
 
         <!-- 地图容器 -->
         <div class="map-container" id="mapContainer">
-            <img class="base-map-img" id="baseMapImg" src="assets/maps/terrain-base.jpg" alt="底图">
+            <img class="base-map-img" id="baseMapImg" src="地形区图片/第二批图片/1-底图.png" alt="底图">
             <div class="overlay-container" id="overlayContainer"></div>
             <div class="handle-container" id="handleContainer"></div>
             <svg class="map-svg" id="mapSvg"></svg>
@@ -114,6 +115,22 @@
                         <div class="level-card-title">&#x1F5FA; 地形区标注</div>
                         <div class="level-card-desc" id="levelDescRegions">在地图上标注主要地形区</div>
                     </button>
+                </div>
+                <div class="name-input-group" id="nameInputGroup">
+                    <div class="name-input-wrapper" id="nameInputSingle">
+                        <div class="name-input-label">挑战者姓名</div>
+                        <input type="text" class="name-input" id="playerNameSingle" placeholder="请输入姓名" maxlength="20">
+                    </div>
+                    <div class="name-input-row" id="nameInputPk" style="display:none;">
+                        <div class="name-input-wrapper">
+                            <div class="name-input-label">玩家1姓名</div>
+                            <input type="text" class="name-input" id="playerName1" placeholder="请输入姓名" maxlength="20">
+                        </div>
+                        <div class="name-input-wrapper">
+                            <div class="name-input-label">玩家2姓名</div>
+                            <input type="text" class="name-input" id="playerName2" placeholder="请输入姓名" maxlength="20">
+                        </div>
+                    </div>
                 </div>
                 <div style="display:flex;gap:12px;">
                     <button class="btn btn-primary" id="startBtn" style="padding:12px 32px;font-size:16px;">开始挑战</button>
@@ -169,7 +186,9 @@
 
     <!-- 编辑模式面板 -->
     <div class="editor-panel" id="editorPanel" style="display:none;">
-        <button class="editor-panel-toggle" id="editorPanelToggle" title="收起/展开面板">⬇</button>
+        <div class="editor-panel-topbar">
+            <button class="editor-panel-toggle" id="editorPanelToggle" title="收起/展开面板">⬇</button>
+        </div>
         <div class="editor-panel-inner">
         <div class="editor-tabs" id="editorTabs">
             <button class="editor-tab active" data-tab="collect">📝 坐标采集</button>
@@ -212,6 +231,11 @@
             <label>范围半径 (px)</label>
             <input type="number" id="editorRadius" value="50" min="10" max="300" step="5">
         </div>
+        <div class="editor-form-row">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" id="editorShowExisting" checked> 显示已维护采集点
+            </label>
+        </div>
         <div class="editor-actions">
             <button class="btn btn-primary" id="editorAddBtn">添加</button>
             <button class="btn btn-secondary" id="editorFinishBoundaryBtn" style="display:none;">完成边界</button>
@@ -235,37 +259,38 @@
                 <select id="calibrationLayerSelect">
                     <option value="mountainBlank">山脉图</option>
                     <option value="terrainRegion">地形图</option>
+                    <option value="adminOutline">完整政区轮廓</option>
                 </select>
             </div>
             <div class="editor-form-row calibration-slider-row">
                 <label>X 偏移</label>
                 <input type="range" id="calibrationX" min="-50" max="50" step="0.1" value="0">
-                <span class="calibration-value" id="calibrationXVal">0</span>
+                <input type="number" class="calibration-value" id="calibrationXVal" min="-50" max="50" step="0.1" value="0">
             </div>
             <div class="editor-form-row calibration-slider-row">
                 <label>Y 偏移</label>
                 <input type="range" id="calibrationY" min="-50" max="50" step="0.1" value="0">
-                <span class="calibration-value" id="calibrationYVal">0</span>
+                <input type="number" class="calibration-value" id="calibrationYVal" min="-50" max="50" step="0.1" value="0">
             </div>
             <div class="editor-form-row calibration-slider-row">
                 <label>宽度</label>
                 <input type="range" id="calibrationW" min="20" max="200" step="0.1" value="100">
-                <span class="calibration-value" id="calibrationWVal">100</span>
+                <input type="number" class="calibration-value" id="calibrationWVal" min="20" max="200" step="0.1" value="100">
             </div>
             <div class="editor-form-row calibration-slider-row">
                 <label>高度</label>
                 <input type="range" id="calibrationH" min="20" max="200" step="0.1" value="100">
-                <span class="calibration-value" id="calibrationHVal">100</span>
+                <input type="number" class="calibration-value" id="calibrationHVal" min="20" max="200" step="0.1" value="100">
             </div>
             <div class="editor-form-row calibration-slider-row">
                 <label>透明度</label>
                 <input type="range" id="calibrationOpacity" min="0.1" max="1" step="0.05" value="0.8">
-                <span class="calibration-value" id="calibrationOpacityVal">0.80</span>
+                <input type="number" class="calibration-value" id="calibrationOpacityVal" min="0.1" max="1" step="0.05" value="0.80">
             </div>
             <div class="editor-form-row calibration-slider-row">
                 <label>等比缩放</label>
                 <input type="range" id="calibrationScale" min="0.1" max="3" step="0.05" value="1">
-                <span class="calibration-value" id="calibrationScaleVal">1.00</span>
+                <input type="number" class="calibration-value" id="calibrationScaleVal" min="0.1" max="3" step="0.05" value="1.00">
             </div>
             <div class="editor-form-row">
                 <label>
@@ -313,6 +338,7 @@
             hintsMax: 3,
             correctCount: 0,
             wrongCount: 0,
+            playerName: '',      // 单人模式挑战者姓名
             items: [],            // 当前关卡的数据项
             placedIds: new Set(), // 已放置的项
             draggedItem: null,    // 当前拖拽的项
@@ -334,6 +360,7 @@
                 active: false,
                 currentPlayer: 1,
                 scores: [0, 0],
+                playerNames: ['', ''], // 两位玩家姓名
                 placedBy: {}, // itemId -> playerNumber
                 turnTime: 20,
                 turnInterval: null,
@@ -388,8 +415,8 @@
                 container: els.overlayContainer,
                 baseWidth: 2981,
                 baseHeight: 2180,
-                mountainSrc: '地形图片/中国的山脉.jpg',
-                regionSrc: '地形图片/中国地形图.jpg',
+                mountainSrc: '地形区图片/中国的山脉.jpg',
+                regionSrc: '地形区图片/中国地形图.jpg',
                 onChange: saveOverlayCalibrationToStorage
             });
             loadOverlayCalibration();
@@ -449,7 +476,10 @@
             // 无论是否有画布 padding，底图可见区域都是叠加图的唯一参照
             const baseImg = document.getElementById('baseMapImg');
             const imgRect = baseImg.getBoundingClientRect();
-            const imgAspect = MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
+            // 使用实际图片的自然尺寸比例，以适配不同分辨率的底图
+            const imgAspect = (baseImg.naturalWidth && baseImg.naturalHeight)
+                ? baseImg.naturalWidth / baseImg.naturalHeight
+                : MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
             const elAspect = imgRect.width / imgRect.height;
             let visX, visY, visW, visH;
             if (elAspect > imgAspect) {
@@ -651,6 +681,63 @@
             });
         }
 
+        function bindLayerDrawer() {
+            const drawer = document.getElementById('layerDrawer');
+            const overlay = document.getElementById('layerDrawerOverlay');
+            const toggleBtn = document.getElementById('layerDrawerToggle');
+            const closeBtn = document.getElementById('layerDrawerClose');
+
+            if (!drawer || !toggleBtn) return;
+
+            function openDrawer() {
+                drawer.classList.add('open');
+                if (overlay) overlay.classList.add('open');
+                // 若坐标采集/校准面板展开，自动收起避免重叠
+                const editorPanel = document.getElementById('editorPanel');
+                const panelToggle = document.getElementById('editorPanelToggle');
+                if (editorPanel && !editorPanel.classList.contains('collapsed') && editorPanel.style.display !== 'none') {
+                    editorPanel.classList.add('collapsed');
+                    if (panelToggle) panelToggle.textContent = '⬅';
+                }
+            }
+
+            function closeDrawer() {
+                drawer.classList.remove('open');
+                if (overlay) overlay.classList.remove('open');
+            }
+
+            toggleBtn.addEventListener('click', openDrawer);
+            if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+            if (overlay) overlay.addEventListener('click', closeDrawer);
+
+            // ESC 键关闭
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && drawer.classList.contains('open')) {
+                    closeDrawer();
+                }
+            });
+
+            // 绑定抽屉面板内各开关的 change 事件（DOM 在 script 后，init 时无法绑定）
+            drawer.querySelectorAll('[data-layer]').forEach(el => {
+                const layerName = el.dataset.layer;
+                const checkbox = el.querySelector('input[type="checkbox"]');
+                if (!checkbox) return;
+
+                // 同步当前状态
+                if (state.layerManager) {
+                    const currentState = state.layerManager.getState(layerName);
+                    checkbox.checked = currentState;
+                    el.classList.toggle('active', currentState);
+                }
+
+                checkbox.addEventListener('change', () => {
+                    if (state.layerManager) {
+                        state.layerManager.toggle(layerName, checkbox.checked);
+                    }
+                });
+            });
+        }
+
         function enterPkMode() {
             state.pk.active = true;
             document.getElementById('pkInfo').style.display = 'flex';
@@ -660,6 +747,8 @@
             const levelName = els.levelName.textContent;
             document.getElementById('startTitle').textContent = '双人PK - ' + levelName;
             document.getElementById('startDesc').textContent = '两位玩家轮流答题，答对继续，答错换对手！';
+            document.getElementById('nameInputSingle').style.display = 'none';
+            document.getElementById('nameInputPk').style.display = 'flex';
             resetPkState();
         }
 
@@ -671,6 +760,8 @@
             els.hintBtn.style.display = '';
             document.getElementById('startTitle').textContent = '选择关卡';
             document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
+            document.getElementById('nameInputSingle').style.display = '';
+            document.getElementById('nameInputPk').style.display = 'none';
             clearInterval(state.pk.turnInterval);
             clearInterval(state.pk.totalInterval);
         }
@@ -702,6 +793,7 @@
             // 叠加图片开关
             const overlayMountainToggle = document.querySelector('.layer-toggle[data-layer="overlayMountain"] input');
             const overlayRegionToggle = document.querySelector('.layer-toggle[data-layer="overlayRegion"] input');
+            const overlayAdminToggle = document.querySelector('.layer-toggle[data-layer="overlayAdmin"] input');
             if (overlayMountainToggle) {
                 overlayMountainToggle.addEventListener('change', () => {
                     state.overlayEngine.setVisible('mountainBlank', overlayMountainToggle.checked);
@@ -710,6 +802,11 @@
             if (overlayRegionToggle) {
                 overlayRegionToggle.addEventListener('change', () => {
                     state.overlayEngine.setVisible('terrainRegion', overlayRegionToggle.checked);
+                });
+            }
+            if (overlayAdminToggle) {
+                overlayAdminToggle.addEventListener('change', () => {
+                    state.overlayEngine.setVisible('adminOutline', overlayAdminToggle.checked);
                 });
             }
 
@@ -761,10 +858,13 @@
             // 重置叠加图片开关和可见性
             const overlayMountainToggle = document.querySelector('.layer-toggle[data-layer="overlayMountain"] input');
             const overlayRegionToggle = document.querySelector('.layer-toggle[data-layer="overlayRegion"] input');
+            const overlayAdminToggle = document.querySelector('.layer-toggle[data-layer="overlayAdmin"] input');
             if (overlayMountainToggle) overlayMountainToggle.checked = false;
             if (overlayRegionToggle) overlayRegionToggle.checked = false;
+            if (overlayAdminToggle) overlayAdminToggle.checked = false;
             state.overlayEngine.setVisible('mountainBlank', false);
             state.overlayEngine.setVisible('terrainRegion', false);
+            state.overlayEngine.setVisible('adminOutline', false);
 
             // 重置状态
             state.placedIds.clear();
@@ -899,7 +999,10 @@
 
         /** 将编辑器数据同步到左侧待标注栏 */
         function syncEditorToSidebar() {
-            state.items = state.editorItems.map(w => ({ ...w.data }));
+            const targetLevel = document.getElementById('editorTargetLevel')?.value || 'mountains';
+            state.items = state.editorItems
+                .filter(w => !w.data.targetLevel || w.data.targetLevel === targetLevel)
+                .map(w => ({ ...w.data }));
             state.placedIds.clear();
 
             // 清空地图旧标记
@@ -929,8 +1032,34 @@
 
         function startGame() {
             if (state.items.length === 0) {
-                showToast('暂无采集数据，请先进入“坐标采集”模块添加数据后再挑战', 'info', 3000);
+                showToast('暂无采集数据，请先进入”坐标采集”模块添加数据后再挑战', 'info', 3000);
                 return;
+            }
+            // 验证挑战者姓名
+            const nameRegex = /^[a-zA-Z0-9一-龥，。！？、：””''（）【】《》…—\-]+$/;
+            if (state.pk.active) {
+                const p1Name = document.getElementById('playerName1').value.trim();
+                const p2Name = document.getElementById('playerName2').value.trim();
+                if (!p1Name || !p2Name) {
+                    showToast('请填写两位玩家的姓名', 'error');
+                    return;
+                }
+                if (!nameRegex.test(p1Name) || !nameRegex.test(p2Name)) {
+                    showToast('姓名只能包含数字、英文、中文和常见标点符号', 'error');
+                    return;
+                }
+                state.pk.playerNames = [p1Name, p2Name];
+            } else {
+                const name = document.getElementById('playerNameSingle').value.trim();
+                if (!name) {
+                    showToast('请填写挑战者姓名', 'error');
+                    return;
+                }
+                if (!nameRegex.test(name)) {
+                    showToast('姓名只能包含数字、英文、中文和常见标点符号', 'error');
+                    return;
+                }
+                state.playerName = name;
             }
             state.isPlaying = true;
             els.startOverlay.style.display = 'none';
@@ -964,7 +1093,8 @@
                 state.pk.turnTime--;
                 document.getElementById('pkTurnTimer').textContent = state.pk.turnTime;
                 if (state.pk.turnTime <= 0) {
-                    showToast(`玩家${state.pk.currentPlayer}超时！切换回合`, 'info');
+                    const name = state.pk.playerNames[state.pk.currentPlayer - 1] || ('玩家' + state.pk.currentPlayer);
+                    showToast(name + '超时！切换回合', 'info');
                     switchTurn();
                 }
             }, 1000);
@@ -981,6 +1111,10 @@
             document.getElementById('pkTurnTimer').textContent = state.pk.turnTime;
             const p1 = document.getElementById('pkP1');
             const p2 = document.getElementById('pkP2');
+            const p1Name = state.pk.playerNames[0] || '玩家1';
+            const p2Name = state.pk.playerNames[1] || '玩家2';
+            p1.querySelector('span:first-child').textContent = p1Name;
+            p2.querySelector('span:first-child').textContent = p2Name;
             if (state.pk.currentPlayer === 1) {
                 p1.style.borderColor = '#4caf50';
                 p2.style.borderColor = 'transparent';
@@ -1044,8 +1178,9 @@
                 el.classList.toggle('earned', i < stars);
             });
 
-            document.getElementById('resultTitle').textContent =
-                stars === 3 ? '太棒了！⭐⭐⭐' : stars === 2 ? '做得很好！⭐⭐' : '完成挑战！⭐';
+            const name = state.playerName || '挑战者';
+            const baseTitle = stars === 3 ? '太棒了！⭐⭐⭐' : stars === 2 ? '做得很好！⭐⭐' : '完成挑战！⭐';
+            document.getElementById('resultTitle').textContent = name + '，' + baseTitle;
 
             els.resultModal.classList.add('active');
         }
@@ -1056,20 +1191,22 @@
             const p1Placed = Object.values(state.pk.placedBy).filter(p => p === 1).length;
             const p2Placed = Object.values(state.pk.placedBy).filter(p => p === 2).length;
             const totalTime = formatTime(state.pk.totalTimer);
+            const p1Name = state.pk.playerNames[0] || '玩家1';
+            const p2Name = state.pk.playerNames[1] || '玩家2';
 
             let title;
-            if (p1Score > p2Score) title = '🎉 玩家1 获胜！';
-            else if (p2Score > p1Score) title = '🎉 玩家2 获胜！';
+            if (p1Score > p2Score) title = '🎉 ' + p1Name + ' 获胜！';
+            else if (p2Score > p1Score) title = '🎉 ' + p2Name + ' 获胜！';
             else title = '🤝 平局！';
 
             document.getElementById('resultTitle').textContent = title;
             document.getElementById('resultStars').style.display = 'none';
 
             document.querySelector('.result-stats').innerHTML = `
-                <div class="result-stat"><div class="stat-value" style="color:#4caf50;">${p1Score}</div><div class="stat-label">玩家1得分</div></div>
-                <div class="result-stat"><div class="stat-value" style="color:#ff9800;">${p2Score}</div><div class="stat-label">玩家2得分</div></div>
-                <div class="result-stat"><div class="stat-value">${p1Placed}</div><div class="stat-label">玩家1标注</div></div>
-                <div class="result-stat"><div class="stat-value">${p2Placed}</div><div class="stat-label">玩家2标注</div></div>
+                <div class="result-stat"><div class="stat-value" style="color:#4caf50;">${p1Score}</div><div class="stat-label">${p1Name} 得分</div></div>
+                <div class="result-stat"><div class="stat-value" style="color:#ff9800;">${p2Score}</div><div class="stat-label">${p2Name} 得分</div></div>
+                <div class="result-stat"><div class="stat-value">${p1Placed}</div><div class="stat-label">${p1Name} 标注</div></div>
+                <div class="result-stat"><div class="stat-value">${p2Placed}</div><div class="stat-label">${p2Name} 标注</div></div>
             `;
 
             els.resultModal.classList.add('active');
@@ -1148,19 +1285,17 @@
 
             // 转换为 SVG 坐标
             const svgPos = state.mapEngine.screenToSvg(clientX, clientY);
-            const dropRadius = item.dropRadius || 50;
+            // 点和线型判定范围放大 1.5 倍，边界类型使用多边形内判定
+            const dropRadius = (item.dropRadius || 50) * 1.5;
 
             // 计算释放位置与目标的最短距离
             let dist = Infinity;
             let targetPos = null;
+            let isInsideBoundary = false;
 
             if (item.point) {
+                // 山脉单点类型
                 targetPos = item.point;
-                const dx = svgPos.x - targetPos.x;
-                const dy = svgPos.y - targetPos.y;
-                dist = Math.sqrt(dx * dx + dy * dy);
-            } else if (item.center) {
-                targetPos = item.center;
                 const dx = svgPos.x - targetPos.x;
                 const dy = svgPos.y - targetPos.y;
                 dist = Math.sqrt(dx * dx + dy * dy);
@@ -1178,14 +1313,27 @@
                     const d = pointToSegmentDist(svgPos.x, svgPos.y, item.points[i], item.points[i + 1]);
                     if (d < dist) {
                         dist = d;
-                        targetPos = item.points[i]; // 落点吸附到线段起点附近（简化处理）
+                        targetPos = item.points[i];
                     }
                 }
+            } else if (item.boundary && item.boundary.length) {
+                // 地形区边界类型：优先判断是否在多边形内部
+                isInsideBoundary = pointInPolygon(svgPos.x, svgPos.y, item.boundary);
+                targetPos = item.center || item.boundary[0];
+                if (!isInsideBoundary) {
+                    dist = pointToPolygonDist(svgPos.x, svgPos.y, item.boundary);
+                }
+            } else if (item.center) {
+                // 地形区中心点类型（无 boundary）
+                targetPos = item.center;
+                const dx = svgPos.x - targetPos.x;
+                const dy = svgPos.y - targetPos.y;
+                dist = Math.sqrt(dx * dx + dy * dy);
             }
 
-            if (!targetPos) return;
+            if (!targetPos && !isInsideBoundary) return;
 
-            if (dist <= dropRadius) {
+            if (isInsideBoundary || dist <= dropRadius) {
                 // 正确放置
                 handleCorrect(item, labelEl, targetPos);
             } else {
@@ -1292,7 +1440,8 @@
             // 浮动反馈
             showFeedbackBadge(targetScreenX, targetScreenY, '+10', 'correct');
             if (state.pk.active) {
-                showToast(`玩家${state.pk.currentPlayer}答对了！+${scoreCfg.correct}，继续答题`, 'success');
+                const name = state.pk.playerNames[state.pk.currentPlayer - 1] || ('玩家' + state.pk.currentPlayer);
+                showToast(name + '答对了！+' + scoreCfg.correct + '，继续答题', 'success');
             } else {
                 showToast('答对了！+' + scoreCfg.correct, 'success');
                 updateUI();
@@ -1323,8 +1472,9 @@
             const rect = labelEl.getBoundingClientRect();
 
             if (state.pk.active) {
+                const name = state.pk.playerNames[state.pk.currentPlayer - 1] || ('玩家' + state.pk.currentPlayer);
                 showFeedbackBadge(rect.left + rect.width / 2, rect.top, '换对手！', 'wrong');
-                showToast(`玩家${state.pk.currentPlayer}答错，换对手！`, 'error');
+                showToast(name + '答错，换对手！', 'error');
                 switchTurn();
             } else {
                 const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
@@ -1488,16 +1638,22 @@
                     if (tabName === 'calibrate') {
                         setCalibrationCanvas(true);
                         const currentLayerId = document.getElementById('calibrationLayerSelect').value;
-                        state.overlayEngine.setVisible('mountainBlank', currentLayerId === 'mountainBlank');
-                        state.overlayEngine.setVisible('terrainRegion', currentLayerId === 'terrainRegion');
+                        // 统一处理所有校准图层可见性
+                        const allData = state.overlayEngine.getCalibrationData();
+                        Object.keys(allData).forEach(id => {
+                            state.overlayEngine.setVisible(id, id === currentLayerId);
+                        });
                         state.mapEngine.clearEditorMarkers();
                         refreshCalibrationHandles();
                         els.mapContainer.classList.add('calibration-mode');
                         document.getElementById('mapMain').classList.add('calibration-mode');
                     } else {
                         setCalibrationCanvas(false);
-                        state.overlayEngine.setVisible('mountainBlank', false);
-                        state.overlayEngine.setVisible('terrainRegion', false);
+                        // 隐藏所有校准图层
+                        const allData = state.overlayEngine.getCalibrationData();
+                        Object.keys(allData).forEach(id => {
+                            state.overlayEngine.setVisible(id, false);
+                        });
                         if (els.handleContainer) els.handleContainer.innerHTML = '';
                         state.mapEngine.clearEditorMarkers();
                         refreshEditorVisuals();
@@ -1525,6 +1681,25 @@
             const editorUndoBtn = document.getElementById('editorUndoBtn');
             const editorClearBtn = document.getElementById('editorClearBtn');
             const editorList = document.getElementById('editorList');
+            const editorShowExisting = document.getElementById('editorShowExisting');
+
+            // 显示/隐藏已维护采集点开关
+            if (editorShowExisting) {
+                editorShowExisting.addEventListener('change', () => {
+                    refreshEditorVisuals();
+                });
+            }
+
+            // 目标关卡切换时，只显示对应关卡的采集点
+            const editorTargetLevel = document.getElementById('editorTargetLevel');
+            if (editorTargetLevel) {
+                editorTargetLevel.addEventListener('change', () => {
+                    cancelEditorEdit();
+                    refreshEditorVisuals();
+                    syncEditorToSidebar();
+                    renderEditorList();
+                });
+            }
 
             // 点击地图采集坐标（点击空白处添加，点击已有采集点/预览标记删除）
             els.mapSvg.addEventListener('pointerdown', (e) => {
@@ -1722,25 +1897,12 @@
                     .filter(i => i.type === 'region')
                     .map(i => i.data);
 
-                let exported = false;
-                if (mountains.length) {
-                    exportJSData(mountains, 'mountains.js', 'mountains');
-                    exported = true;
-                }
-                if (lines.length) {
-                    exportJSData(lines, 'lines.js', 'lines');
-                    exported = true;
-                }
-                if (regions.length) {
-                    exportJSData(regions, 'terrain-regions.js', 'regions');
-                    exported = true;
-                }
+                // 始终导出三个文件，空数组也能覆盖旧数据，避免删除后残留
+                exportJSData(mountains, 'mountains.js', 'mountains');
+                exportJSData(lines, 'lines.js', 'lines');
+                exportJSData(regions, 'terrain-regions.js', 'regions');
 
-                if (!exported) {
-                    alert('没有数据可导出');
-                } else {
-                    showToast('JS 数据文件已导出到下载目录，请覆盖到项目 data/ 文件夹下', 'success', 4000);
-                }
+                showToast('JS 数据文件已导出到下载目录，请覆盖到项目 data/ 文件夹下', 'success', 4000);
             });
         }
 
@@ -1754,6 +1916,42 @@
             t = Math.max(0, Math.min(1, t));
             const nx = a.x + t * dx, ny = a.y + t * dy;
             return Math.sqrt((px - nx) ** 2 + (py - ny) ** 2);
+        }
+
+        /**
+         * 判断点是否在多边形内部（射线法）
+         * @param {number} px - 点 x
+         * @param {number} py - 点 y
+         * @param {Array} polygon - [{x,y}, ...]
+         * @returns {boolean}
+         */
+        function pointInPolygon(px, py, polygon) {
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i].x, yi = polygon[i].y;
+                const xj = polygon[j].x, yj = polygon[j].y;
+                const intersect = ((yi > py) !== (yj > py)) &&
+                    (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        /**
+         * 计算点到多边形边界的最短距离
+         * @param {number} px - 点 x
+         * @param {number} py - 点 y
+         * @param {Array} polygon - [{x,y}, ...]
+         * @returns {number}
+         */
+        function pointToPolygonDist(px, py, polygon) {
+            let minDist = Infinity;
+            for (let i = 0; i < polygon.length; i++) {
+                const j = (i + 1) % polygon.length;
+                const d = pointToSegmentDist(px, py, polygon[i], polygon[j]);
+                if (d < minDist) minDist = d;
+            }
+            return minDist;
         }
 
         /**
@@ -1777,9 +1975,9 @@
          */
         function refreshLinePreview() {
             const editorLayer = state.mapEngine.layers.editor;
-            editorLayer.querySelectorAll('.editor-polyline-group').forEach(g => g.remove());
+            editorLayer.querySelectorAll('.editor-polyline-group.editor-preview').forEach(g => g.remove());
             if (state.editorLinePoints.length >= 1) {
-                state.mapEngine.addEditorPolyline(state.editorLinePoints, editorName.value || '未命名');
+                state.mapEngine.addEditorPolyline(state.editorLinePoints, editorName.value || '未命名', true);
             }
         }
 
@@ -1855,9 +2053,12 @@
          * @returns {Object|null} { idx, isBoundary, boundaryIdx, isLineVertex, vertexIdx }
          */
         function findEditorItemAt(x, y, baseThreshold) {
+            const targetLevel = document.getElementById('editorTargetLevel')?.value || 'mountains';
             for (let i = 0; i < state.editorItems.length; i++) {
                 const wrapper = state.editorItems[i];
                 const d = wrapper.data;
+                // 只检测与当前目标关卡匹配的采集点
+                if (d.targetLevel && d.targetLevel !== targetLevel) continue;
                 if (wrapper.type === 'mountain' && d.point) {
                     const dist = Math.sqrt((x - d.point.x) ** 2 + (y - d.point.y) ** 2);
                     const threshold = Math.max(baseThreshold, d.dropRadius || baseThreshold);
@@ -2118,10 +2319,13 @@
         function renderEditorList() {
             const editorList = document.getElementById('editorList');
             editorList.innerHTML = '';
+            const targetLevel = document.getElementById('editorTargetLevel')?.value || 'mountains';
             state.editorItems.forEach((item, idx) => {
+                const d = item.data;
+                // 列表只显示与当前目标关卡匹配的采集点
+                if (d.targetLevel && d.targetLevel !== targetLevel) return;
                 const div = document.createElement('div');
                 div.className = 'editor-point-item';
-                const d = item.data;
                 let coordInfo = '';
                 if (item.type === 'mountain' && d.point) {
                     coordInfo = `(${d.point.x}, ${d.point.y})`;
@@ -2166,23 +2370,37 @@
         /** 刷新编辑器视觉标记和预览圈 */
         function refreshEditorVisuals() {
             state.mapEngine.clearEditorMarkers();
-            state.editorItems.forEach(item => {
-                const d = item.data;
-                if (item.type === 'mountain' && d.point) {
-                    state.mapEngine.addEditorMarker(d.point.x, d.point.y, d.name);
-                    state.mapEngine.addEditorDropZone(d.point.x, d.point.y, d.dropRadius || 50, 'R=' + (d.dropRadius || 50));
-                } else if (item.type === 'line' && d.points && d.points.length >= 2) {
-                    state.mapEngine.addEditorPolyline(d.points, d.name);
-                } else if (item.type === 'region' && d.boundary && d.boundary.length) {
-                    d.boundary.forEach((p, i) => state.mapEngine.addEditorMarker(p.x, p.y, 'B' + (i + 1)));
-                    if (d.center) {
+            const showExisting = document.getElementById('editorShowExisting')?.checked !== false;
+            const targetLevel = document.getElementById('editorTargetLevel')?.value || 'mountains';
+            if (showExisting) {
+                state.editorItems.forEach(item => {
+                    const d = item.data;
+                    // 只显示与当前目标关卡匹配的采集点
+                    if (d.targetLevel && d.targetLevel !== targetLevel) return;
+                    if (item.type === 'mountain' && d.point) {
+                        state.mapEngine.addEditorMarker(d.point.x, d.point.y, d.name);
+                        state.mapEngine.addEditorDropZone(d.point.x, d.point.y, d.dropRadius || 50, 'R=' + (d.dropRadius || 50));
+                    } else if (item.type === 'line' && d.points && d.points.length >= 2) {
+                        state.mapEngine.addEditorPolyline(d.points, d.name);
+                    } else if (item.type === 'region' && d.boundary && d.boundary.length) {
+                        d.boundary.forEach((p, i) => state.mapEngine.addEditorMarker(p.x, p.y, 'B' + (i + 1)));
+                        if (d.center) {
+                            state.mapEngine.addEditorMarker(d.center.x, d.center.y, d.name);
+                        }
+                    } else if (item.type === 'region' && d.center) {
                         state.mapEngine.addEditorMarker(d.center.x, d.center.y, d.name);
+                        state.mapEngine.addEditorDropZone(d.center.x, d.center.y, d.dropRadius || 80, 'R=' + (d.dropRadius || 80));
                     }
-                } else if (item.type === 'region' && d.center) {
-                    state.mapEngine.addEditorMarker(d.center.x, d.center.y, d.name);
-                    state.mapEngine.addEditorDropZone(d.center.x, d.center.y, d.dropRadius || 80, 'R=' + (d.dropRadius || 80));
-                }
-            });
+                });
+            }
+            // 保留当前正在绘制的线型预览
+            if (state.editorLinePoints.length >= 1) {
+                refreshLinePreview();
+            }
+            // 保留当前正在绘制的边界预览点
+            if (state.editorBoundaryPoints.length) {
+                state.editorBoundaryPoints.forEach((p, i) => state.mapEngine.addEditorMarker(p.x, p.y, 'B' + (i + 1)));
+            }
         }
 
         function updateCalibrationSliders() {
@@ -2195,12 +2413,12 @@
             document.getElementById('calibrationH').value = data.height;
             document.getElementById('calibrationOpacity').value = data.opacity;
             document.getElementById('calibrationScale').value = data.scale;
-            document.getElementById('calibrationXVal').textContent = Number(data.x).toFixed(1);
-            document.getElementById('calibrationYVal').textContent = Number(data.y).toFixed(1);
-            document.getElementById('calibrationWVal').textContent = Number(data.width).toFixed(1);
-            document.getElementById('calibrationHVal').textContent = Number(data.height).toFixed(1);
-            document.getElementById('calibrationOpacityVal').textContent = Number(data.opacity).toFixed(2);
-            document.getElementById('calibrationScaleVal').textContent = Number(data.scale).toFixed(2);
+            document.getElementById('calibrationXVal').value = Number(data.x).toFixed(1);
+            document.getElementById('calibrationYVal').value = Number(data.y).toFixed(1);
+            document.getElementById('calibrationWVal').value = Number(data.width).toFixed(1);
+            document.getElementById('calibrationHVal').value = Number(data.height).toFixed(1);
+            document.getElementById('calibrationOpacityVal').value = Number(data.opacity).toFixed(2);
+            document.getElementById('calibrationScaleVal').value = Number(data.scale).toFixed(2);
         }
 
         function refreshCalibrationHandles() {
@@ -2300,13 +2518,20 @@
             const resetAllBtn = document.getElementById('calibrationResetAllBtn');
             const exportBtn = document.getElementById('calibrationExportBtn');
 
+            const xValInput = document.getElementById('calibrationXVal');
+            const yValInput = document.getElementById('calibrationYVal');
+            const wValInput = document.getElementById('calibrationWVal');
+            const hValInput = document.getElementById('calibrationHVal');
+            const opacityValInput = document.getElementById('calibrationOpacityVal');
+            const scaleValInput = document.getElementById('calibrationScaleVal');
+
             function updateSliderValues() {
-                document.getElementById('calibrationXVal').textContent = Number(xSlider.value).toFixed(1);
-                document.getElementById('calibrationYVal').textContent = Number(ySlider.value).toFixed(1);
-                document.getElementById('calibrationWVal').textContent = Number(wSlider.value).toFixed(1);
-                document.getElementById('calibrationHVal').textContent = Number(hSlider.value).toFixed(1);
-                document.getElementById('calibrationOpacityVal').textContent = Number(opacitySlider.value).toFixed(2);
-                document.getElementById('calibrationScaleVal').textContent = Number(scaleSlider.value).toFixed(2);
+                xValInput.value = Number(xSlider.value).toFixed(1);
+                yValInput.value = Number(ySlider.value).toFixed(1);
+                wValInput.value = Number(wSlider.value).toFixed(1);
+                hValInput.value = Number(hSlider.value).toFixed(1);
+                opacityValInput.value = Number(opacitySlider.value).toFixed(2);
+                scaleValInput.value = Number(scaleSlider.value).toFixed(2);
             }
 
             function applySliders() {
@@ -2319,6 +2544,35 @@
                 state.overlayEngine.setCalibrationData(layerId, 'scale', parseFloat(scaleSlider.value));
                 refreshCalibrationHandles();
             }
+
+            /**
+             * 将值限制在范围并截断到指定小数位
+             */
+            function clampAndRound(value, min, max, decimals) {
+                let v = parseFloat(value);
+                if (isNaN(v)) return min;
+                v = Math.min(max, Math.max(min, v));
+                return Number(v.toFixed(decimals));
+            }
+
+            // 为数值输入框绑定 change 事件，支持手动输入
+            const inputConfigs = [
+                { input: xValInput, slider: xSlider, min: -50, max: 50, decimals: 1, field: 'x' },
+                { input: yValInput, slider: ySlider, min: -50, max: 50, decimals: 1, field: 'y' },
+                { input: wValInput, slider: wSlider, min: 20, max: 200, decimals: 1, field: 'width' },
+                { input: hValInput, slider: hSlider, min: 20, max: 200, decimals: 1, field: 'height' },
+                { input: opacityValInput, slider: opacitySlider, min: 0.1, max: 1, decimals: 2, field: 'opacity' },
+                { input: scaleValInput, slider: scaleSlider, min: 0.1, max: 3, decimals: 2, field: 'scale' }
+            ];
+
+            inputConfigs.forEach(cfg => {
+                cfg.input.addEventListener('change', () => {
+                    const v = clampAndRound(cfg.input.value, cfg.min, cfg.max, cfg.decimals);
+                    cfg.input.value = v;
+                    cfg.slider.value = v;
+                    applySliders();
+                });
+            });
 
             // Initialize sliders with current data
             const calData = state.overlayEngine.getCalibrationData();
@@ -2355,8 +2609,10 @@
                 }
                 // 校准模式下只展示当前选中的图层
                 if (state.editorTab === 'calibrate') {
-                    state.overlayEngine.setVisible('mountainBlank', layerId === 'mountainBlank');
-                    state.overlayEngine.setVisible('terrainRegion', layerId === 'terrainRegion');
+                    const allData = state.overlayEngine.getCalibrationData();
+                    Object.keys(allData).forEach(id => {
+                        state.overlayEngine.setVisible(id, id === layerId);
+                    });
                 }
                 refreshCalibrationHandles();
             });
@@ -2422,7 +2678,97 @@
 
         // 暴露内部接口供调试和自动化测试
         window._game = { state, els, setupLevel, startGame, restartGame, endGame, showDescription, loadEditorItemsToGame, refreshEditorVisuals, findEditorItemAt, deleteEditorItem, saveEditorItem, renderEditorList, syncEditorToSidebar, pushUndo, undo, refreshLinePreview };
+
+        // 抽屉面板 DOM 在 script 标签之后，延迟绑定事件
+        setTimeout(() => {
+            bindLayerDrawer();
+        }, 0);
     })();
     </script>
+
+    <!-- 右侧图层抽屉面板 -->
+    <div class="layer-drawer-overlay" id="layerDrawerOverlay"></div>
+    <div class="layer-drawer" id="layerDrawer">
+        <div class="layer-drawer-header">
+            <h3>🗺️ 图层开关</h3>
+            <button class="layer-drawer-close" id="layerDrawerClose">&times;</button>
+        </div>
+        <div class="layer-drawer-body">
+            <div class="layer-group">
+                <div class="layer-group-title">基础要素</div>
+                <label class="layer-drawer-item" data-layer="rivers">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        中国主要河流
+                        <div class="item-hint">底图 + 河流</div>
+                    </span>
+                </label>
+                <label class="layer-drawer-item" data-layer="admin">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        中国行政区界线
+                        <div class="item-hint">底图 + 行政区</div>
+                    </span>
+                </label>
+                <label class="layer-drawer-item" data-layer="grid">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        经纬网
+                        <div class="item-hint">底图 + 经纬网</div>
+                    </span>
+                </label>
+            </div>
+            <div class="layer-group">
+                <div class="layer-group-title">叠加要素</div>
+                <label class="layer-drawer-item" data-layer="mountain">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        中国山脉图
+                        <div class="item-hint">底图 + 山脉（若基础要素有开则自动切换为全部要素）</div>
+                    </span>
+                </label>
+            </div>
+            <div class="layer-group">
+                <div class="layer-group-title">特殊组合</div>
+                <label class="layer-drawer-item" data-layer="special8">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        经纬网 + 行政区 + 河流 + 底图
+                        <div class="item-hint">图8：1+2+4+6</div>
+                    </span>
+                </label>
+                <label class="layer-drawer-item" data-layer="special11">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        全要素叠加
+                        <div class="item-hint">图11：全部要素</div>
+                    </span>
+                </label>
+                <label class="layer-drawer-item" data-layer="special12">
+                    <input type="checkbox">
+                    <span class="item-label">
+                        行政区 + 省会 + 河流
+                        <div class="item-hint">图12：独立完整底图</div>
+                    </span>
+                </label>
+            </div>
+            <div class="layer-group">
+                <div class="layer-group-title">练习辅助</div>
+                <label class="layer-drawer-item" data-layer="dropZones">
+                    <input type="checkbox">
+                    <span class="item-label">目标提示</span>
+                </label>
+                <label class="layer-drawer-item" data-layer="mountains" id="drawerToggleMountains" style="display:none;">
+                    <input type="checkbox">
+                    <span class="item-label">山脉标记</span>
+                </label>
+                <label class="layer-drawer-item" data-layer="regions" id="drawerToggleRegions" style="display:none;">
+                    <input type="checkbox">
+                    <span class="item-label">地形区标注</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
