@@ -1673,6 +1673,7 @@
             if (!label || label.classList.contains('placed')) return;
 
             e.preventDefault();
+            try { label.setPointerCapture(e.pointerId); } catch (_) {}
             const itemId = label.dataset.id;
             const item = state.items.find(i => i.id === itemId);
             if (!item) return;

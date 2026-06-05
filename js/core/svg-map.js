@@ -1,17 +1,13 @@
 /**
  * SVG 地图引擎
- * 负责底图加载、viewBox 管理、坐标转换、经纬网绘制、标记渲染
+ * 负责底图加载、viewBox 管理、坐标转换、标记渲染
  */
 
 // 地图配置（根据实际底图尺寸调整）
 const MAP_CONFIG = {
     baseWidth: 2981,
     baseHeight: 2180,
-    baseImage: '地形区图片/第二批图片/1-底图.png',
-    // 中国大致经纬度范围（用于绘制经纬网）
-    lonRange: { min: 73, max: 135 },
-    latRange: { min: 18, max: 54 },
-    gridStep: 5 // 经纬线间隔（度）
+    baseImage: '地形区图片/第二批图片/1-底图.png'
 };
 
 /**
@@ -71,9 +67,6 @@ function initSvgMap(svgSelector) {
         editor: createGroup(svg, 'editor-layer')
     };
 
-    // 绘制经纬网
-    drawGrid(layers.grid);
-
     /**
      * 在 SVG 内创建命名分组
      */
@@ -82,59 +75,6 @@ function initSvgMap(svgSelector) {
         g.setAttribute('class', className);
         parent.appendChild(g);
         return g;
-    }
-
-    /**
-     * 根据底图尺寸绘制经纬网
-     * 采用线性映射：经纬度 → 像素坐标
-     */
-    function drawGrid(container) {
-        const { baseWidth, baseHeight, lonRange, latRange, gridStep } = MAP_CONFIG;
-
-        // 经纬度到像素坐标的转换函数
-        function lonToX(lon) {
-            return ((lon - lonRange.min) / (lonRange.max - lonRange.min)) * baseWidth;
-        }
-        function latToY(lat) {
-            // 纬度从大到小（北在上），所以用 max - lat
-            return ((latRange.max - lat) / (latRange.max - latRange.min)) * baseHeight;
-        }
-
-        // 绘制经线（竖线）
-        for (let lon = Math.ceil(lonRange.min / gridStep) * gridStep; lon <= lonRange.max; lon += gridStep) {
-            const x = lonToX(lon);
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x);
-            line.setAttribute('y1', 0);
-            line.setAttribute('x2', x);
-            line.setAttribute('y2', baseHeight);
-            container.appendChild(line);
-
-            // 经度标注（底部）
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', x + 4);
-            text.setAttribute('y', baseHeight - 6);
-            text.textContent = lon + '°E';
-            container.appendChild(text);
-        }
-
-        // 绘制纬线（横线）
-        for (let lat = Math.ceil(latRange.min / gridStep) * gridStep; lat <= latRange.max; lat += gridStep) {
-            const y = latToY(lat);
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', 0);
-            line.setAttribute('y1', y);
-            line.setAttribute('x2', baseWidth);
-            line.setAttribute('y2', y);
-            container.appendChild(line);
-
-            // 纬度标注（左侧）
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', 6);
-            text.setAttribute('y', y - 4);
-            text.textContent = lat + '°N';
-            container.appendChild(text);
-        }
     }
 
     /**

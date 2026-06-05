@@ -67,7 +67,8 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2753,
       "y": 420
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "daxinganling",
@@ -136,7 +137,8 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2307,
       "y": 143
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "xiaoxinganling",
@@ -181,7 +183,8 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2426,
       "y": 193
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "yanshan",
@@ -210,7 +213,8 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2224,
       "y": 784
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "altaishan",
@@ -263,7 +267,8 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 844,
       "y": 248
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "tianshan",
@@ -300,6 +305,123 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 535,
       "y": 605
+    },
+    "difficulty": 1
+  },
+  {
+    "id": "item_38271_27743",
+    "name": "长江",
+    "description": "",
+    "targetLevel": "terrain-regions",
+    "difficulty": 3,
+    "points": [
+      {
+        "x": 1616,
+        "y": 1516
+      },
+      {
+        "x": 1721,
+        "y": 1473
+      },
+      {
+        "x": 1792,
+        "y": 1404
+      },
+      {
+        "x": 1868,
+        "y": 1386
+      },
+      {
+        "x": 1932,
+        "y": 1394
+      },
+      {
+        "x": 1980,
+        "y": 1413
+      },
+      {
+        "x": 2018,
+        "y": 1442
+      },
+      {
+        "x": 2056,
+        "y": 1454
+      },
+      {
+        "x": 2075,
+        "y": 1423
+      },
+      {
+        "x": 2101,
+        "y": 1392
+      },
+      {
+        "x": 2150,
+        "y": 1399
+      },
+      {
+        "x": 2189,
+        "y": 1425
+      },
+      {
+        "x": 2224,
+        "y": 1430
+      },
+      {
+        "x": 2254,
+        "y": 1381
+      },
+      {
+        "x": 2306,
+        "y": 1323
+      },
+      {
+        "x": 2346,
+        "y": 1278
+      },
+      {
+        "x": 2398,
+        "y": 1278
+      },
+      {
+        "x": 2456,
+        "y": 1291
+      }
+    ],
+    "dropRadius": 50,
+    "labelPosition": {
+      "x": 1616,
+      "y": 1496
+    }
+  },
+  {
+    "id": "item_33945_21476_23665",
+    "name": "蒙古山",
+    "description": "",
+    "targetLevel": "mountains",
+    "difficulty": 2,
+    "points": [
+      {
+        "x": 1695,
+        "y": 810
+      },
+      {
+        "x": 1750,
+        "y": 810
+      },
+      {
+        "x": 1838,
+        "y": 812
+      },
+      {
+        "x": 1871,
+        "y": 812
+      }
+    ],
+    "dropRadius": 50,
+    "labelPosition": {
+      "x": 1695,
+      "y": 790
     }
   }
 ];

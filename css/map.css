@@ -115,6 +115,7 @@
     font-weight: 600;
     cursor: grab;
     user-select: none;
+    touch-action: none;
     transition: all 0.2s ease;
     text-align: center;
     color: var(--color-text);

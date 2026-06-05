@@ -75,7 +75,8 @@ window.GEO_DATA.regions = [
     "labelPosition": {
       "x": 1426,
       "y": 1406
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "item_38738_34255_39640_21407",
@@ -156,7 +157,8 @@ window.GEO_DATA.regions = [
     "labelPosition": {
       "x": 870,
       "y": 1248
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "qinling",
@@ -237,7 +239,8 @@ window.GEO_DATA.regions = [
     "labelPosition": {
       "x": 1667,
       "y": 1195
-    }
+    },
+    "difficulty": 1
   },
   {
     "id": "item_21326_21271_24179_21407",
@@ -253,6 +256,7 @@ window.GEO_DATA.regions = [
       "x": 2109,
       "y": 935
     },
-    "boundary": []
+    "boundary": [],
+    "difficulty": 1
   }
 ];
