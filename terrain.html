@@ -868,7 +868,15 @@
 
             document.getElementById('resultRestartBtn').addEventListener('click', () => {
                 document.getElementById('resultModal').classList.remove('active');
-                restartGame();
+                if (state.mode === 'challenge' && state.challenge.active) {
+                    // 闯关模式：重新生成关卡并回到开始界面
+                    state.challenge.active = false;
+                    enterChallengeMode();
+                    els.startOverlay.style.display = '';
+                    els.sidebar.style.display = 'none';
+                } else {
+                    restartGame();
+                }
             });
             document.getElementById('resultHomeBtn').addEventListener('click', () => {
                 location.href = 'index.html';
@@ -1425,6 +1433,50 @@
                 <div class="result-stat"><div class="stat-value">${p1Placed}</div><div class="stat-label">${p1Name} 标注</div></div>
                 <div class="result-stat"><div class="stat-value">${p2Placed}</div><div class="stat-label">${p2Name} 标注</div></div>
             `;
+
+            els.resultModal.classList.add('active');
+        }
+
+        function showChallengeSuccess() {
+            const name = state.challenge.playerName || '挑战者';
+            document.getElementById('resultTitle').textContent = '🎉 ' + name + '，闯关成功！';
+            document.getElementById('resultStars').style.display = 'none';
+
+            document.querySelector('.result-stats').innerHTML = `
+                <div class="result-stat"><div class="stat-value" id="statScore">0</div><div class="stat-label">总得分</div></div>
+                <div class="result-stat"><div class="stat-value" id="statTime">00:00</div><div class="stat-label">总用时</div></div>
+                <div class="result-stat"><div class="stat-value" id="statLevels">0</div><div class="stat-label">闯过关卡</div></div>
+                <div class="result-stat"><div class="stat-value" id="statTotalLevels">0</div><div class="stat-label">总关卡数</div></div>
+            `;
+
+            document.getElementById('statScore').textContent = state.challenge.totalScore;
+            document.getElementById('statTime').textContent = formatTime(state.challenge.totalTimer);
+            document.getElementById('statLevels').textContent = state.challenge.totalLevels;
+            document.getElementById('statTotalLevels').textContent = state.challenge.totalLevels;
+
+            els.resultModal.classList.add('active');
+        }
+
+        function showChallengeFail() {
+            const name = state.challenge.playerName || '挑战者';
+            const level = state.challenge.currentLevelIdx + 1;
+            const question = state.challenge.currentQuestionIdx + 1;
+            const passedLevels = state.challenge.currentLevelIdx;
+
+            document.getElementById('resultTitle').textContent = '💔 ' + name + '，闯关失败';
+            document.getElementById('resultStars').style.display = 'none';
+
+            document.querySelector('.result-stats').innerHTML = `
+                <div class="result-stat"><div class="stat-value" id="statFailLevel">0</div><div class="stat-label">失败关卡</div></div>
+                <div class="result-stat"><div class="stat-value" id="statFailQuestion">0</div><div class="stat-label">失败题号</div></div>
+                <div class="result-stat"><div class="stat-value" id="statPassed">0</div><div class="stat-label">已通过关</div></div>
+                <div class="result-stat"><div class="stat-value" id="statTotalTime">00:00</div><div class="stat-label">总用时</div></div>
+            `;
+
+            document.getElementById('statFailLevel').textContent = level;
+            document.getElementById('statFailQuestion').textContent = question;
+            document.getElementById('statPassed').textContent = passedLevels;
+            document.getElementById('statTotalTime').textContent = formatTime(state.challenge.totalTimer);
 
             els.resultModal.classList.add('active');
         }
