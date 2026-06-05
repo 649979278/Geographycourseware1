@@ -216,6 +216,14 @@
             </select>
         </div>
         <div class="editor-form-row">
+            <label>难度星级</label>
+            <select id="editorDifficulty">
+                <option value="1">⭐ 1星（简单）</option>
+                <option value="2">⭐⭐ 2星（中等）</option>
+                <option value="3">⭐⭐⭐ 3星（困难）</option>
+            </select>
+        </div>
+        <div class="editor-form-row">
             <label>名称</label>
             <input type="text" id="editorName" placeholder="如：大兴安岭">
         </div>
@@ -1804,7 +1812,8 @@
                     id: pinyinId(name),
                     name: name,
                     description: editorDesc.value.trim(),
-                    targetLevel: document.getElementById('editorTargetLevel').value
+                    targetLevel: document.getElementById('editorTargetLevel').value,
+                    difficulty: parseInt(document.getElementById('editorDifficulty').value) || 1
                 };
                 const radius = parseInt(document.getElementById('editorRadius').value) || (type === 'mountain' ? 50 : 80);
 
@@ -2235,6 +2244,7 @@
             editorName.value = d.name;
             editorDesc.value = d.description || '';
             document.getElementById('editorTargetLevel').value = d.targetLevel || 'mountains';
+            document.getElementById('editorDifficulty').value = d.difficulty || 1;
             const editorRadiusRow = document.getElementById('editorRadiusRow');
             if (wrapper.type === 'line' || (wrapper.type === 'region' && d.boundary && d.boundary.length)) {
                 editorRadiusRow.style.display = 'none';
