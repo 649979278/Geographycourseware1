@@ -978,6 +978,73 @@
             }
         };
 
+        // ============================================================
+        // 闯关模式关卡生成器
+        // ============================================================
+
+        const challengeManager = {
+            /**
+             * 从所有采集点生成闯关关卡
+             * @returns {Object} { totalLevels, levels: [{ items }] }
+             */
+            generateLevels() {
+                const allItems = [];
+                const mountains = window.GEO_DATA?.mountains || [];
+                const lines = window.GEO_DATA?.lines || [];
+                const regions = window.GEO_DATA?.regions || [];
+
+                [...mountains, ...lines, ...regions].forEach(d => {
+                    const copy = JSON.parse(JSON.stringify(d));
+                    if (typeof copy.difficulty !== 'number') copy.difficulty = 1;
+                    if (!copy.targetLevel) {
+                        copy.targetLevel = d.point || d.points ? 'mountains' : 'terrain-regions';
+                    }
+                    allItems.push(copy);
+                });
+
+                if (allItems.length === 0) {
+                    return { totalLevels: 0, levels: [] };
+                }
+
+                // 计算关卡数：优先每关5题，但每关至少3题、最多8题；关卡数最少2关、最多10关
+                let totalLevels = Math.min(10, Math.max(2, Math.ceil(allItems.length / 5)));
+                let perLevel = Math.ceil(allItems.length / totalLevels);
+
+                // 如果每关不足3题，减少关卡数
+                if (perLevel < 3) {
+                    totalLevels = Math.min(10, Math.max(2, Math.floor(allItems.length / 3)));
+                    perLevel = Math.ceil(allItems.length / totalLevels);
+                }
+
+                // 如果每关超过8题，增加关卡数（或截断）
+                if (perLevel > 8) {
+                    totalLevels = Math.min(10, Math.ceil(allItems.length / 8));
+                    perLevel = Math.ceil(allItems.length / totalLevels);
+                }
+
+                // 按难度升序排序
+                allItems.sort((a, b) => a.difficulty - b.difficulty);
+
+                // 分配到各关卡
+                const levels = [];
+                let itemIdx = 0;
+                for (let i = 0; i < totalLevels; i++) {
+                    const remainingLevels = totalLevels - i;
+                    const remainingItems = allItems.length - itemIdx;
+                    const count = Math.min(remainingItems, Math.ceil(remainingItems / remainingLevels));
+                    const levelItems = allItems.slice(itemIdx, itemIdx + count);
+                    // 每关内部随机洗牌
+                    levels.push({
+                        levelNumber: i + 1,
+                        items: shuffleArray(levelItems)
+                    });
+                    itemIdx += count;
+                }
+
+                return { totalLevels: levels.length, levels };
+            }
+        };
+
         /** 从全局 JS 数据文件加载采集数据到编辑器 */
         function loadEditorStorage() {
             const mountains = window.GEO_DATA?.mountains || [];
