@@ -958,16 +958,19 @@
                 mountains.forEach(d => {
                     const copy = JSON.parse(JSON.stringify(d));
                     if (!copy.targetLevel) copy.targetLevel = 'mountains';
+                    if (typeof copy.difficulty !== 'number') copy.difficulty = 1;
                     allData.push(copy);
                 });
                 lines.forEach(d => {
                     const copy = JSON.parse(JSON.stringify(d));
                     if (!copy.targetLevel) copy.targetLevel = 'mountains';
+                    if (typeof copy.difficulty !== 'number') copy.difficulty = 1;
                     allData.push(copy);
                 });
                 regions.forEach(d => {
                     const copy = JSON.parse(JSON.stringify(d));
                     if (!copy.targetLevel) copy.targetLevel = 'terrain-regions';
+                    if (typeof copy.difficulty !== 'number') copy.difficulty = 1;
                     allData.push(copy);
                 });
 
@@ -984,16 +987,19 @@
                 ...mountains.map(d => {
                     const data = JSON.parse(JSON.stringify(d));
                     if (!data.targetLevel) data.targetLevel = 'mountains';
+                    if (typeof data.difficulty !== 'number') data.difficulty = 1;
                     return { type: 'mountain', data };
                 }),
                 ...lines.map(d => {
                     const data = JSON.parse(JSON.stringify(d));
                     if (!data.targetLevel) data.targetLevel = 'mountains';
+                    if (typeof data.difficulty !== 'number') data.difficulty = 1;
                     return { type: 'line', data };
                 }),
                 ...regions.map(d => {
                     const data = JSON.parse(JSON.stringify(d));
                     if (!data.targetLevel) data.targetLevel = 'terrain-regions';
+                    if (typeof data.difficulty !== 'number') data.difficulty = 1;
                     return { type: 'region', data };
                 })
             ];
