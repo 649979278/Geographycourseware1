@@ -1605,6 +1605,12 @@
             state.correctCount++;
             const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
 
+            // 闯关模式：累计得分
+            if (state.mode === 'challenge' && state.challenge.active) {
+                state.challenge.totalScore += scoreCfg.correct;
+                state.challenge.currentQuestionIdx++;
+            }
+
             if (state.pk.active) {
                 // PK 模式：当前玩家得分，记录归属
                 const pIdx = state.pk.currentPlayer - 1;
@@ -1668,7 +1674,18 @@
 
             // 检查是否全部完成
             if (state.placedIds.size >= state.items.length) {
-                setTimeout(endGame, 800);
+                if (state.mode === 'challenge' && state.challenge.active) {
+                    // 关卡通过，短暂延迟后进入下一关
+                    setTimeout(() => {
+                        state.challenge.hintsAvailable++;
+                        showToast('第 ' + (state.challenge.currentLevelIdx + 1) + ' 关通过！获得 1 次提示', 'success', 1500);
+                        setTimeout(() => {
+                            startChallengeLevel(state.challenge.currentLevelIdx + 1);
+                        }, 1500);
+                    }, 600);
+                } else {
+                    setTimeout(endGame, 800);
+                }
             }
         }
 
@@ -1681,8 +1698,6 @@
             }
 
             state.wrongCount++;
-
-            // 标签抖动
             labelEl.classList.add('shake');
             setTimeout(() => labelEl.classList.remove('shake'), 400);
 
@@ -1693,6 +1708,11 @@
                 showFeedbackBadge(rect.left + rect.width / 2, rect.top, '换对手！', 'wrong');
                 showToast(name + '答错，换对手！', 'error');
                 switchTurn();
+            } else if (state.mode === 'challenge' && state.challenge.active) {
+                // 闯关模式：答错即失败
+                showFeedbackBadge(rect.left + rect.width / 2, rect.top, '失败！', 'wrong');
+                showToast('答错了，闯关失败！', 'error');
+                endChallenge(false);
             } else {
                 const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
                 state.score = Math.max(0, state.score + scoreCfg.wrong);
