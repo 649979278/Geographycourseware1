@@ -1,0 +1,13 @@
+- generic [ref=e2]:
+  - heading "中国地理教学课件" [level=1] [ref=e3]
+  - paragraph [ref=e4]: 拖拽互动 · 游戏练习 · 本地演示
+  - link "⛰️ 中国的地形 标注0座主要山脉与4个主要地形区，了解中国地势分布 ✓ 山脉名称与位置标注 ✓ 地形区轮廓识别 ✓ 阶梯分布互动练习 进入模块 →" [ref=e6] [cursor=pointer]:
+    - /url: terrain.html
+    - generic [ref=e7]: ⛰️
+    - heading "中国的地形" [level=3] [ref=e8]
+    - paragraph [ref=e9]: 标注0座主要山脉与4个主要地形区，了解中国地势分布
+    - list [ref=e10]:
+      - listitem [ref=e11]: ✓ 山脉名称与位置标注
+      - listitem [ref=e12]: ✓ 地形区轮廓识别
+      - listitem [ref=e13]: ✓ 阶梯分布互动练习
+    - button "进入模块 →"

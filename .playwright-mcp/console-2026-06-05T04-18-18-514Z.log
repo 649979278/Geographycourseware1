@@ -1,0 +1,3 @@
+[      71ms] [LOG] [setupLevel] levelId= mountains items.length= 6 @ http://127.0.0.1:3000/terrain.html:911
+[     245ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/favicon.ico:0
+[  929982ms] [LOG] pointerdown fired on labelList drag-label @ :7

@@ -813,6 +813,68 @@
             document.getElementById('challengeTotalLevels').textContent = challengeData.totalLevels;
             const dropZonesToggle = document.querySelector('.layer-toggle[data-layer="dropZones"]');
             if (dropZonesToggle) dropZonesToggle.style.display = 'none';
+            // 闯关模式可能包含山脉和地形区两种类型，同时显示两个开关
+            const layerToggleMountains = document.getElementById('layerToggleMountains');
+            const layerToggleRegions = document.getElementById('layerToggleRegions');
+            if (layerToggleMountains) layerToggleMountains.style.display = '';
+            if (layerToggleRegions) layerToggleRegions.style.display = '';
+            // 抽屉面板中的对应开关也显示
+            const drawerToggleMountains = document.getElementById('drawerToggleMountains');
+            const drawerToggleRegions = document.getElementById('drawerToggleRegions');
+            if (drawerToggleMountains) drawerToggleMountains.style.display = '';
+            if (drawerToggleRegions) drawerToggleRegions.style.display = '';
+
+            // 闯关模式下隐藏叠加图片开关（山脉图、地形图、政区轮廓图）
+            const layerToggleOverlayMountain = document.getElementById('layerToggleOverlayMountain');
+            const layerToggleOverlayRegion = document.getElementById('layerToggleOverlayRegion');
+            const layerToggleOverlayAdmin = document.getElementById('layerToggleOverlayAdmin');
+            if (layerToggleOverlayMountain) layerToggleOverlayMountain.style.display = 'none';
+            if (layerToggleOverlayRegion) layerToggleOverlayRegion.style.display = 'none';
+            if (layerToggleOverlayAdmin) layerToggleOverlayAdmin.style.display = 'none';
+
+            // 保持和单人/双人模式一样的逻辑：进入模式时即加载第一关数据并渲染标记，
+            // 使图层开关在开始界面即可产生可见效果
+            if (challengeData.levels.length > 0) {
+                const firstLevel = challengeData.levels[0];
+                state.items = JSON.parse(JSON.stringify(firstLevel.items));
+                state.level = 'challenge';
+                state.placedIds.clear();
+                state.score = 0;
+                state.timer = 0;
+                state.hintsUsed = 0;
+                state.correctCount = 0;
+                state.wrongCount = 0;
+                updateUI();
+
+                // 重置图层状态
+                state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false });
+
+                // 清空并渲染地图标记
+                state.mapEngine.layers.mountains.innerHTML = '';
+                state.mapEngine.layers.lines.innerHTML = '';
+                state.mapEngine.layers.regions.innerHTML = '';
+                state.mapEngine.clearDropZones();
+                state.mapEngine.clearAnswers();
+
+                state.items.forEach(item => {
+                    if (item.point) {
+                        state.mapEngine.addMountainMarker(item, showDescription, true);
+                        state.mapEngine.addDropZone(item, 'mountain');
+                    } else if (item.points && item.points.length) {
+                        state.mapEngine.addPolyline(item, showDescription, true);
+                    } else if (item.center || (item.boundary && item.boundary.length)) {
+                        state.mapEngine.addRegionBoundary(item, showDescription, true);
+                        state.mapEngine.addDropZone(item, 'region');
+                    }
+                });
+
+                renderLabels();
+                updateCounts();
+            }
+
+            // 显示开始覆盖层，隐藏侧边栏（和单人/双人模式一致）
+            els.startOverlay.style.display = '';
+            els.sidebar.style.display = 'none';
         }
 
         function exitChallengeMode() {
@@ -824,6 +886,16 @@
             document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
             const dropZonesToggle = document.querySelector('.layer-toggle[data-layer="dropZones"]');
             if (dropZonesToggle) dropZonesToggle.style.display = '';
+            // 恢复叠加图片开关显示
+            const layerToggleOverlayMountain = document.getElementById('layerToggleOverlayMountain');
+            const layerToggleOverlayRegion = document.getElementById('layerToggleOverlayRegion');
+            const layerToggleOverlayAdmin = document.getElementById('layerToggleOverlayAdmin');
+            if (layerToggleOverlayMountain) layerToggleOverlayMountain.style.display = '';
+            if (layerToggleOverlayRegion) layerToggleOverlayRegion.style.display = '';
+            if (layerToggleOverlayAdmin) layerToggleOverlayAdmin.style.display = '';
+            // 恢复单人模式的地图状态和开关显示，保持和单人/双人模式一样的逻辑
+            const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
+            setupLevel(levelToRestore);
         }
 
         function resetPkState() {
@@ -1074,42 +1146,112 @@
                     return { totalLevels: 0, levels: [] };
                 }
 
-                // 计算关卡数：优先每关5题，但每关至少3题、最多8题；关卡数最少2关、最多10关
-                let totalLevels = Math.min(10, Math.max(2, Math.ceil(allItems.length / 5)));
-                let perLevel = Math.ceil(allItems.length / totalLevels);
+                const totalItems = allItems.length;
 
-                // 如果每关不足3题，减少关卡数
-                if (perLevel < 3) {
-                    totalLevels = Math.min(10, Math.max(2, Math.floor(allItems.length / 3)));
-                    perLevel = Math.ceil(allItems.length / totalLevels);
-                }
-
-                // 如果每关超过8题，增加关卡数（或截断）
-                if (perLevel > 8) {
-                    totalLevels = Math.min(10, Math.ceil(allItems.length / 8));
-                    perLevel = Math.ceil(allItems.length / totalLevels);
-                }
-
-                // 按难度升序排序
+                // 1. 按难度升序排序
                 allItems.sort((a, b) => a.difficulty - b.difficulty);
 
-                // 分配到各关卡
-                const levels = [];
-                let itemIdx = 0;
-                for (let i = 0; i < totalLevels; i++) {
-                    const remainingLevels = totalLevels - i;
-                    const remainingItems = allItems.length - itemIdx;
-                    const count = Math.min(remainingItems, Math.ceil(remainingItems / remainingLevels));
-                    const levelItems = allItems.slice(itemIdx, itemIdx + count);
-                    // 每关内部随机洗牌
-                    levels.push({
-                        levelNumber: i + 1,
-                        items: shuffleArray(levelItems)
-                    });
-                    itemIdx += count;
+                // 2. 计算合法关卡数范围：每关最少3题、最多8题；关卡最少2关、最多10关
+                let minLevels = Math.max(2, Math.ceil(totalItems / 8));
+                let maxLevels = Math.min(10, Math.floor(totalItems / 3));
+
+                let totalLevels;
+                const levelSizes = [];
+
+                if (minLevels > maxLevels) {
+                    // 数据量过少，无法同时满足所有约束，强制兜底为2关
+                    totalLevels = 2;
+                    const firstHalf = Math.floor(totalItems / 2);
+                    levelSizes.push(firstHalf, totalItems - firstHalf);
+                } else {
+                    // 在合法范围内随机选取关卡数，实现"动态随机"
+                    totalLevels = Math.floor(Math.random() * (maxLevels - minLevels + 1)) + minLevels;
+
+                    // 3. 计算每关题数：基础数 + 余数补到最后几关
+                    const baseCount = Math.floor(totalItems / totalLevels);
+                    const remainder = totalItems % totalLevels;
+                    for (let i = 0; i < totalLevels; i++) {
+                        // 后 remainder 关各多一题
+                        levelSizes.push(baseCount + (i >= totalLevels - remainder ? 1 : 0));
+                    }
                 }
 
-                return { totalLevels: levels.length, levels };
+                // 4. 按难度分组，组内洗牌（同难度题目先打乱，便于后续分散分配）
+                const difficultyGroups = {};
+                allItems.forEach(item => {
+                    const d = item.difficulty || 1;
+                    if (!difficultyGroups[d]) difficultyGroups[d] = [];
+                    difficultyGroups[d].push(item);
+                });
+                Object.keys(difficultyGroups).forEach(d => {
+                    difficultyGroups[d] = shuffleArray(difficultyGroups[d]);
+                });
+
+                // 5. 初始化关卡容器
+                const levels = Array.from({ length: totalLevels }, () => []);
+                const difficulties = Object.keys(difficultyGroups).map(Number).sort((a, b) => a - b);
+                const maxDifficulty = Math.max(...difficulties, 1);
+
+                // 6. 带权重的关卡分配
+                // 核心思想：难度越低越偏好靠前关卡，难度越高越偏好靠后关卡；
+                // 同时通过随机扰动和同难度惩罚，保证同星级题目在各关中充分分散。
+                difficulties.forEach(d => {
+                    const items = difficultyGroups[d];
+                    // 理想关卡位置：难度1对应第0关，最高难度对应最后一关
+                    const idealPos = maxDifficulty <= 1 ? 0 : ((d - 1) / (maxDifficulty - 1)) * (totalLevels - 1);
+
+                    items.forEach(item => {
+                        let bestLevel = 0;
+                        let bestScore = -Infinity;
+
+                        for (let i = 0; i < totalLevels; i++) {
+                            if (levels[i].length >= levelSizes[i]) continue; // 该关已满，跳过
+
+                            // 位置匹配分：越接近理想位置分数越高（范围 0~1）
+                            const distance = Math.abs(i - idealPos);
+                            const matchScore = 1 / (1 + distance);
+
+                            // 随机扰动：让同难度题目可以分散到相邻关卡
+                            const randomFactor = Math.random() * 0.5;
+
+                            // 多样性惩罚：该关已存在的同难度题目越多，权重越低，避免扎堆
+                            const sameDifficultyCount = levels[i].filter(it => (it.difficulty || 1) === d).length;
+                            const diversityPenalty = sameDifficultyCount * 0.2;
+
+                            const score = matchScore + randomFactor - diversityPenalty;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestLevel = i;
+                            }
+                        }
+
+                        levels[bestLevel].push(item);
+                    });
+                });
+
+                // 7. 兜底：若还有未分配的题目，轮询填入有空位的关卡
+                const assignedSet = new Set(levels.flat());
+                const unassigned = allItems.filter(item => !assignedSet.has(item));
+                let levelIdx = 0;
+                unassigned.forEach(item => {
+                    let attempts = 0;
+                    while (levels[levelIdx].length >= levelSizes[levelIdx] && attempts < totalLevels) {
+                        levelIdx = (levelIdx + 1) % totalLevels;
+                        attempts++;
+                    }
+                    if (attempts < totalLevels) {
+                        levels[levelIdx].push(item);
+                        levelIdx = (levelIdx + 1) % totalLevels;
+                    }
+                });
+
+                // 8. 包装结果，每关内部再做一次洗牌，保证题目出现顺序随机
+                const result = levels.map((items, i) => ({
+                    levelNumber: i + 1,
+                    items: shuffleArray(items)
+                }));
+
+                return { totalLevels: result.length, levels: result };
             }
         };
 
@@ -1261,6 +1403,9 @@
                 return;
             }
 
+            // 清除上一关的计时器，避免多个计时器同时运行
+            clearInterval(state.timerInterval);
+
             state.challenge.currentLevelIdx = levelIdx;
             state.challenge.currentQuestionIdx = 0;
             const levelData = state.challenge.levels[levelIdx];
@@ -1277,6 +1422,15 @@
             els.startOverlay.style.display = 'none';
             els.sidebar.style.display = '';
             state.isPlaying = true;
+
+            // 启动关卡计时器
+            state.timerInterval = setInterval(() => {
+                state.timer++;
+                els.timerDisplay.textContent = formatTime(state.timer);
+            }, 1000);
+
+            // 重置图层状态，确保开关与 DOM 同步
+            state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false });
 
             // 重置地图标记
             state.mapEngine.layers.mountains.innerHTML = '';
@@ -1360,7 +1514,8 @@
                 state.challenge.active = false;
                 enterChallengeMode();
             } else {
-                setupLevel(state.level);
+                const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
+                setupLevel(levelToRestore);
             }
         }
 
@@ -1507,7 +1662,8 @@
         // ============================================================
 
         function setupDragAndDrop() {
-            // 事件委托到 labelList
+            // 事件委托到 labelList，先移除旧监听器避免重复绑定
+            els.labelList.removeEventListener('pointerdown', onPointerDown);
             els.labelList.addEventListener('pointerdown', onPointerDown);
         }
 
@@ -1676,7 +1832,8 @@
 
             state.placedIds.add(item.id);
             state.correctCount++;
-            const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
+            const levelIdForScore = item.targetLevel || state.level;
+            const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === levelIdForScore)?.score || { correct: 10, wrong: -5, hint: -3 };
 
             // 闯关模式：累计得分
             if (state.mode === 'challenge' && state.challenge.active) {

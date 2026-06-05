@@ -1,7 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Skill(superpowers:brainstorming)"
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_run_code_unsafe",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_drag",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Skill(superpowers:systematic-debugging)",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__windows-cli__execute_command",
+      "mcp__plugin_playwright_playwright__browser_network_requests"
     ]
   }
 }
