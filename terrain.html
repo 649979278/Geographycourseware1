@@ -1166,6 +1166,34 @@
             }
             // 验证挑战者姓名
             const nameRegex = /^[a-zA-Z0-9一-龥，。！？、：””''（）【】《》…—\-]+$/;
+            // 闯关模式
+            if (state.mode === 'challenge') {
+                const name = document.getElementById('playerNameSingle').value.trim();
+                if (!name) {
+                    showToast('请填写挑战者姓名', 'error');
+                    return;
+                }
+                if (!nameRegex.test(name)) {
+                    showToast('姓名只能包含数字、英文、中文和常见标点符号', 'error');
+                    return;
+                }
+                state.challenge.playerName = name;
+                state.challenge.active = true;
+                state.challenge.currentLevelIdx = 0;
+                state.challenge.currentQuestionIdx = 0;
+                state.challenge.hintsAvailable = 0;
+                state.challenge.totalScore = 0;
+                state.challenge.totalTimer = 0;
+                state.playerName = name;
+
+                // 启动总计时器
+                state.challenge.totalInterval = setInterval(() => {
+                    state.challenge.totalTimer++;
+                }, 1000);
+
+                startChallengeLevel(0);
+                return;
+            }
             if (state.pk.active) {
                 const p1Name = document.getElementById('playerName1').value.trim();
                 const p2Name = document.getElementById('playerName2').value.trim();
@@ -1202,6 +1230,56 @@
                     els.timerDisplay.textContent = formatTime(state.timer);
                 }, 1000);
             }
+            setupDragAndDrop();
+            updateUI();
+        }
+
+        function startChallengeLevel(levelIdx) {
+            if (levelIdx >= state.challenge.levels.length) {
+                // 全部通过
+                endChallenge(true);
+                return;
+            }
+
+            state.challenge.currentLevelIdx = levelIdx;
+            state.challenge.currentQuestionIdx = 0;
+            const levelData = state.challenge.levels[levelIdx];
+            state.items = JSON.parse(JSON.stringify(levelData.items));
+            state.level = 'challenge';
+            state.placedIds.clear();
+            state.score = 0;
+            state.timer = 0;
+            state.hintsUsed = 0;
+            state.correctCount = 0;
+            state.wrongCount = 0;
+
+            els.levelName.textContent = '第 ' + (levelIdx + 1) + ' / ' + state.challenge.totalLevels + ' 关';
+            els.startOverlay.style.display = 'none';
+            els.sidebar.style.display = '';
+            state.isPlaying = true;
+
+            // 重置地图标记
+            state.mapEngine.layers.mountains.innerHTML = '';
+            state.mapEngine.layers.lines.innerHTML = '';
+            state.mapEngine.layers.regions.innerHTML = '';
+            state.mapEngine.clearDropZones();
+            state.mapEngine.clearAnswers();
+
+            // 渲染地图标记
+            state.items.forEach(item => {
+                if (item.point) {
+                    state.mapEngine.addMountainMarker(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'mountain');
+                } else if (item.points && item.points.length) {
+                    state.mapEngine.addPolyline(item, showDescription, true);
+                } else if (item.center || (item.boundary && item.boundary.length)) {
+                    state.mapEngine.addRegionBoundary(item, showDescription, true);
+                    state.mapEngine.addDropZone(item, 'region');
+                }
+            });
+
+            renderLabels();
+            updateCounts();
             setupDragAndDrop();
             updateUI();
         }
@@ -1277,6 +1355,16 @@
             } else {
                 const stars = calculateStars(state.timer, state.wrongCount);
                 showResult(stars);
+            }
+        }
+
+        function endChallenge(success) {
+            stopGame();
+            clearInterval(state.challenge.totalInterval);
+            if (success) {
+                showChallengeSuccess();
+            } else {
+                showChallengeFail();
             }
         }
 
