@@ -37,6 +37,7 @@
         <div class="mode-switch" id="modeSwitch">
             <button class="active" data-mode="single">单人练习</button>
             <button data-mode="pk">双人PK</button>
+            <button data-mode="challenge" id="challengeBtn">闯关模式</button>
             <button data-mode="editor" id="editorBtn">坐标采集</button>
         </div>
     </div>
@@ -131,6 +132,9 @@
                             <input type="text" class="name-input" id="playerName2" placeholder="请输入姓名" maxlength="20">
                         </div>
                     </div>
+                </div>
+                <div id="challengeInfo" style="display:none;margin:12px 0;font-size:14px;color:#666;">
+                    共 <strong id="challengeTotalLevels">0</strong> 关，答错一题即失败，闯过一关获得 1 次提示！
                 </div>
                 <div style="display:flex;gap:12px;">
                     <button class="btn btn-primary" id="startBtn" style="padding:12px 32px;font-size:16px;">开始挑战</button>
@@ -372,6 +376,19 @@
                 placedBy: {}, // itemId -> playerNumber
                 turnTime: 20,
                 turnInterval: null,
+                totalTimer: 0,
+                totalInterval: null
+            },
+            // 闯关模式
+            challenge: {
+                active: false,
+                totalLevels: 0,
+                currentLevelIdx: 0,
+                currentQuestionIdx: 0,
+                levels: [],
+                hintsAvailable: 0,
+                playerName: '',
+                totalScore: 0,
                 totalTimer: 0,
                 totalInterval: null
             }
@@ -681,8 +698,11 @@
                     state.mode = mode;
                     if (mode === 'pk') {
                         enterPkMode();
+                    } else if (mode === 'challenge') {
+                        enterChallengeMode();
                     } else {
                         exitPkMode();
+                        exitChallengeMode();
                     }
                     if (state.isPlaying) restartGame();
                 });
@@ -772,6 +792,34 @@
             document.getElementById('nameInputPk').style.display = 'none';
             clearInterval(state.pk.turnInterval);
             clearInterval(state.pk.totalInterval);
+        }
+
+        function enterChallengeMode() {
+            state.mode = 'challenge';
+            document.getElementById('pkInfo').style.display = 'none';
+            els.scoreDisplay.parentElement.style.display = '';
+            els.timerDisplay.parentElement.style.display = '';
+            els.hintBtn.style.display = '';
+            document.getElementById('startTitle').textContent = '闯关模式';
+            document.getElementById('startDesc').textContent = '准备好迎接挑战了吗？';
+            document.getElementById('nameInputSingle').style.display = '';
+            document.getElementById('nameInputPk').style.display = 'none';
+            document.getElementById('levelSelect').style.display = 'none';
+            document.getElementById('challengeInfo').style.display = '';
+            // 生成关卡数据
+            const challengeData = challengeManager.generateLevels();
+            state.challenge.totalLevels = challengeData.totalLevels;
+            state.challenge.levels = challengeData.levels;
+            document.getElementById('challengeTotalLevels').textContent = challengeData.totalLevels;
+        }
+
+        function exitChallengeMode() {
+            state.challenge.active = false;
+            document.getElementById('challengeInfo').style.display = 'none';
+            document.getElementById('levelSelect').style.display = '';
+            // 恢复单人模式的开始界面文案
+            document.getElementById('startTitle').textContent = '选择关卡';
+            document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
         }
 
         function resetPkState() {
