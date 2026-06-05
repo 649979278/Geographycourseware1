@@ -1353,7 +1353,15 @@
 
         function restartGame() {
             stopGame();
-            setupLevel(state.level);
+            if (state.mode === 'challenge' && state.challenge.active) {
+                // 闯关模式重开 = 回到当前关开始界面
+                els.startOverlay.style.display = '';
+                els.sidebar.style.display = 'none';
+                state.challenge.active = false;
+                enterChallengeMode();
+            } else {
+                setupLevel(state.level);
+            }
         }
 
         function stopGame() {
@@ -1361,6 +1369,7 @@
             clearInterval(state.timerInterval);
             clearInterval(state.pk.turnInterval);
             clearInterval(state.pk.totalInterval);
+            clearInterval(state.challenge.totalInterval);
             if (state.dragEl) {
                 state.dragEl.remove();
                 state.dragEl = null;
