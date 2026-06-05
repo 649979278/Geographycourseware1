@@ -811,6 +811,8 @@
             state.challenge.totalLevels = challengeData.totalLevels;
             state.challenge.levels = challengeData.levels;
             document.getElementById('challengeTotalLevels').textContent = challengeData.totalLevels;
+            const dropZonesToggle = document.querySelector('.layer-toggle[data-layer="dropZones"]');
+            if (dropZonesToggle) dropZonesToggle.style.display = 'none';
         }
 
         function exitChallengeMode() {
@@ -820,6 +822,8 @@
             // 恢复单人模式的开始界面文案
             document.getElementById('startTitle').textContent = '选择关卡';
             document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
+            const dropZonesToggle = document.querySelector('.layer-toggle[data-layer="dropZones"]');
+            if (dropZonesToggle) dropZonesToggle.style.display = '';
         }
 
         function resetPkState() {
@@ -994,9 +998,17 @@
         function updateUI() {
             els.scoreDisplay.textContent = state.score;
             els.timerDisplay.textContent = formatTime(state.timer);
-            els.hintCount.textContent = Math.max(0, state.hintsMax - state.hintsUsed);
+            if (state.mode === 'challenge' && state.challenge.active) {
+                els.hintCount.textContent = state.challenge.hintsAvailable;
+            } else {
+                els.hintCount.textContent = Math.max(0, state.hintsMax - state.hintsUsed);
+            }
             const dropZonesEnabled = state.layerManager ? state.layerManager.getState('dropZones') : false;
-            els.hintBtn.disabled = state.hintsUsed >= state.hintsMax || !state.isPlaying || !dropZonesEnabled;
+            if (state.mode === 'challenge' && state.challenge.active) {
+                els.hintBtn.disabled = state.challenge.hintsAvailable <= 0 || !state.isPlaying;
+            } else {
+                els.hintBtn.disabled = state.hintsUsed >= state.hintsMax || !state.isPlaying || !dropZonesEnabled;
+            }
         }
 
         // ============================================================
@@ -1788,34 +1800,24 @@
         // 提示功能
         // ============================================================
 
-        function useHint() {
-            if (!state.isPlaying || state.hintsUsed >= state.hintsMax) return;
-
-            // 按顺序找到一个未放置的项
-            const unplaced = state.items.find(i => !state.placedIds.has(i.id));
-            if (!unplaced) return;
-
-            state.hintsUsed++;
-            const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
-            state.score = Math.max(0, state.score + scoreCfg.hint);
-
-            // 高亮目标区域 3 秒（兼容点、连续线、范围三种方式）
-            const dropZone = els.mapSvg.querySelector(`.drop-zone[data-id="${unplaced.id}"]`);
-            if (dropZone) {
-                const dzLayer = state.mapEngine.layers.dropZones;
-                const dzLayerHidden = dzLayer.style.display === 'none';
-                if (dzLayerHidden) dzLayer.style.display = '';
-                dropZone.style.display = '';
-                dropZone.classList.add('visible');
-                setTimeout(() => {
-                    dropZone.classList.remove('visible');
-                    if (dzLayerHidden) dzLayer.style.display = 'none';
-                }, 3000);
+        function showHintForItem(unplaced) {
+            if (unplaced.point || unplaced.center) {
+                const dropZone = els.mapSvg.querySelector(`.drop-zone[data-id="${unplaced.id}"]`);
+                if (dropZone) {
+                    const dzLayer = state.mapEngine.layers.dropZones;
+                    const dzLayerHidden = dzLayer.style.display === 'none';
+                    if (dzLayerHidden) dzLayer.style.display = '';
+                    dropZone.style.display = '';
+                    dropZone.classList.add('visible');
+                    setTimeout(() => {
+                        dropZone.classList.remove('visible');
+                        if (dzLayerHidden) dzLayer.style.display = 'none';
+                    }, 3000);
+                }
             } else if (unplaced.points) {
                 const lineLayer = state.mapEngine.layers.lines;
                 const lineLayerHidden = lineLayer.style.display === 'none';
                 if (lineLayerHidden) lineLayer.style.display = '';
-
                 const lineItem = els.mapSvg.querySelector(`.line-item[data-id="${unplaced.id}"]`);
                 if (lineItem) {
                     lineItem.style.display = '';
@@ -1834,7 +1836,6 @@
                 const regionLayer = state.mapEngine.layers.regions;
                 const regionLayerHidden = regionLayer.style.display === 'none';
                 if (regionLayerHidden) regionLayer.style.display = '';
-
                 const regionItem = els.mapSvg.querySelector(`.region-item[data-id="${unplaced.id}"]`);
                 if (regionItem) {
                     regionItem.style.display = '';
@@ -1857,7 +1858,28 @@
                 labelEl.classList.add('label-hint-highlight');
                 setTimeout(() => labelEl.classList.remove('label-hint-highlight'), 3000);
             }
+        }
 
+        function useHint() {
+            if (!state.isPlaying) return;
+
+            const unplaced = state.items.find(i => !state.placedIds.has(i.id));
+            if (!unplaced) return;
+
+            if (state.mode === 'challenge' && state.challenge.active) {
+                if (state.challenge.hintsAvailable <= 0) return;
+                state.challenge.hintsAvailable--;
+                showHintForItem(unplaced);
+                showToast('已提示一个目标位置', 'info');
+                updateUI();
+                return;
+            }
+
+            if (state.hintsUsed >= state.hintsMax) return;
+            state.hintsUsed++;
+            const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
+            state.score = Math.max(0, state.score + scoreCfg.hint);
+            showHintForItem(unplaced);
             showToast('已提示一个目标位置 -' + Math.abs(scoreCfg.hint) + '分', 'info');
             updateUI();
         }
