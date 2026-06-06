@@ -24,7 +24,7 @@ function resolveBaseImage(states) {
         3: '6、经纬网+省区+底图.png',
         4: '2、山脉+底图.png',
         5: '5、经纬网+山脉+底图.png',
-        6: '7、经纬网+山脉+省区+底图.png',
+        6: '8、山脉+省区+底图.png',
         7: '7、经纬网+山脉+省区+底图.png'
     };
 
@@ -92,6 +92,18 @@ function createLayerManager(mapEngine, overlayEngine) {
         const newState = force !== undefined ? force : !layerStates[layerName];
 
         layerStates[layerName] = newState;
+
+        // 底图要素与特殊要素互斥
+        if (['admin', 'grid', 'mountain'].includes(layerName) && newState && layerStates.adminCapital) {
+            toggle('adminCapital', false);
+        }
+        if (layerName === 'adminCapital' && newState) {
+            ['mountain', 'admin', 'grid'].forEach(baseLayer => {
+                if (layerStates[baseLayer]) {
+                    toggle(baseLayer, false);
+                }
+            });
+        }
 
         // 如果切换的是底图开关组，更新底图
         if (['admin', 'grid', 'mountain'].includes(layerName)) {
