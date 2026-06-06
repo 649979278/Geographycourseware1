@@ -720,6 +720,228 @@
     pointer-events: auto;
 }
 
+/* ============================================================
+   双屏对战模式
+   ============================================================ */
+
+.dual-screen-wrapper {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    background: #f0f2f5;
+}
+
+.dual-screen-mode .dual-screen-wrapper {
+    display: flex;
+}
+
+.dual-screen-content {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.dual-screen-mode #sidebar,
+.dual-screen-mode #mapContainer {
+    display: none !important;
+}
+
+/* PK 强制结算顶部横幅 */
+.pk-force-end-banner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #ff7043, #ff5722);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    z-index: 30;
+    box-shadow: 0 2px 8px rgba(255,87,34,0.35);
+    animation: slide-down 0.3s ease;
+}
+
+.pk-force-end-banner.active {
+    display: flex;
+}
+
+.pk-force-end-icon {
+    font-size: 18px;
+}
+
+@keyframes slide-down {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* 双屏面板外壳 */
+.dual-panel {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    margin: 12px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.dual-panel.left-panel {
+    margin-right: 6px;
+}
+
+.dual-panel.right-panel {
+    margin-left: 6px;
+}
+
+.dual-panel .sidebar {
+    width: 150px;
+    min-width: 120px;
+    background: #fafbfc;
+    border-right: 1px solid #e8eaed;
+    border-radius: 16px 0 0 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dual-panel.right-panel .sidebar {
+    border-right: none;
+    border-left: 1px solid #e8eaed;
+    border-radius: 0 16px 16px 0;
+}
+
+.dual-panel .map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #eef0f4;
+    border-radius: 0 16px 16px 0;
+}
+
+.dual-panel.right-panel .map-container {
+    border-radius: 16px 0 0 16px;
+}
+
+.dual-panel .sidebar-header {
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    background: #f5f6f8;
+    border-bottom: 1px solid #e8eaed;
+}
+
+.dual-panel .drag-label {
+    padding: 7px 9px;
+    font-size: 12px;
+    margin: 3px 8px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition: all 0.15s ease;
+}
+
+.dual-panel .drag-label:hover {
+    border-color: #4caf50;
+    box-shadow: 0 2px 6px rgba(76,175,80,0.15);
+    transform: translateY(-1px);
+}
+
+/* 玩家结算遮罩（双屏模式） */
+.player-result-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.92);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    border-radius: 0 16px 16px 0;
+    backdrop-filter: blur(4px);
+}
+
+.dual-panel.right-panel .player-result-overlay {
+    border-radius: 16px 0 0 16px;
+}
+
+.player-result-overlay.active {
+    display: flex;
+}
+
+.player-result-overlay .result-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #2c5f2d;
+}
+
+.player-result-overlay .result-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 24px;
+    margin-bottom: 20px;
+}
+
+.player-result-overlay .result-stat .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+}
+
+.player-result-overlay .result-stat .stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+/* 对比结果弹窗 */
+.comparison-modal .modal-content {
+    max-width: 520px;
+    width: 90%;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 12px 16px;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.comparison-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.comparison-table td {
+    font-size: 16px;
+    color: #555;
+}
+
+.comparison-table .player-name {
+    font-size: 14px;
+    color: #888;
+}
+
+.comparison-table .winner {
+    color: #43a047;
+    font-weight: 700;
+}
+
 /* 响应式：小屏幕隐藏侧边栏 */
 @media (max-width: 768px) {
     .sidebar {
@@ -731,5 +953,13 @@
     }
     .layer-drawer {
         width: 240px;
+    }
+    .dual-panel .sidebar {
+        width: 120px;
+        min-width: 100px;
+    }
+    .dual-panel .drag-label {
+        padding: 6px 8px;
+        font-size: 11px;
     }
 }

@@ -1,0 +1,173 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "← 返回首页" [ref=e3] [cursor=pointer]:
+      - /url: index.html
+    - generic [ref=e4]: 中国的地形
+    - button "🗺️ 图层" [ref=e5] [cursor=pointer]
+    - generic [ref=e6] [cursor=pointer]:
+      - checkbox "山脉标记" [ref=e7]
+      - text: 山脉标记
+    - generic [ref=e16]:
+      - button "单人练习" [ref=e17] [cursor=pointer]
+      - button "双人PK" [ref=e18] [cursor=pointer]
+      - button "闯关模式" [ref=e19] [cursor=pointer]
+      - button "坐标采集" [ref=e20] [cursor=pointer]
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]: 关卡：
+      - generic [ref=e24]: 山脉标注
+    - generic [ref=e32]: 进度：
+    - button "🔄 重开" [ref=e36] [cursor=pointer]
+  - generic [ref=e86]:
+    - generic [ref=e87]:
+      - generic [ref=e88]: ⏱️
+      - generic [ref=e89]: 玩家1 剩余 9 秒 强制结算
+    - generic [ref=e90]:
+      - complementary [ref=e91]:
+        - generic [ref=e92]:
+          - generic [ref=e93]: 玩家1
+          - generic [ref=e94]: 25 / 25
+        - generic [ref=e95]:
+          - generic [ref=e96]: 贺兰山
+          - generic [ref=e97]: 阿尔金山
+          - generic [ref=e98]: 燕山
+          - generic [ref=e99]: 武夷山
+          - generic [ref=e100]: 天山
+          - generic [ref=e101]: 喜玛拉雅山
+          - generic [ref=e102]: 横断山脉
+          - generic [ref=e103]: 巴颜喀拉山
+          - generic [ref=e104]: 阴山山脉
+          - generic [ref=e105]: 大兴安岭
+          - generic [ref=e106]: 秦岭
+          - generic [ref=e107]: 巫山
+          - generic [ref=e108]: 南岭
+          - generic [ref=e109]: 大别山
+          - generic [ref=e110]: 祁连山脉
+          - generic [ref=e111]: 小兴安岭
+          - generic [ref=e112]: 唐古拉山
+          - generic [ref=e113]: 阿尔泰山
+          - generic [ref=e114]: 大巴山
+          - generic [ref=e115]: 冈底斯山
+          - generic [ref=e116]: 雪峰山
+          - generic [ref=e117]: 台湾山脉
+          - generic [ref=e118]: 长白山
+          - generic [ref=e119]: 太行山脉
+          - generic [ref=e120]: 昆仑山脉
+      - generic [ref=e121]:
+        - img "底图"
+        - img [ref=e122]
+    - generic [ref=e123]:
+      - generic [ref=e124]:
+        - img "底图"
+        - img [ref=e125]
+      - complementary [ref=e126]:
+        - generic [ref=e127]:
+          - generic [ref=e128]: 玩家2
+          - generic [ref=e129]: 25 / 25
+        - generic [ref=e130]:
+          - generic [ref=e131]: 燕山
+          - generic [ref=e132]: 唐古拉山
+          - generic [ref=e133]: 横断山脉
+          - generic [ref=e134]: 阴山山脉
+          - generic [ref=e135]: 阿尔泰山
+          - generic [ref=e136]: 天山
+          - generic [ref=e137]: 小兴安岭
+          - generic [ref=e138]: 冈底斯山
+          - generic [ref=e139]: 大兴安岭
+          - generic [ref=e140]: 阿尔金山
+          - generic [ref=e141]: 长白山
+          - generic [ref=e142]: 雪峰山
+          - generic [ref=e143]: 大巴山
+          - generic [ref=e144]: 祁连山脉
+          - generic [ref=e145]: 大别山
+          - generic [ref=e146]: 武夷山
+          - generic [ref=e147]: 南岭
+          - generic [ref=e148]: 太行山脉
+          - generic [ref=e149]: 昆仑山脉
+          - generic [ref=e150]: 台湾山脉
+          - generic [ref=e151]: 巫山
+          - generic [ref=e152]: 贺兰山
+          - generic [ref=e153]: 喜玛拉雅山
+          - generic [ref=e154]: 秦岭
+          - generic [ref=e155]: 巴颜喀拉山
+  - generic:
+    - generic:
+      - generic: 挑战完成！
+      - generic:
+        - generic: ⭐
+        - generic: ⭐
+        - generic: ⭐
+      - generic:
+        - generic:
+          - generic: "0"
+          - generic: 得分
+        - generic:
+          - generic: 00:00
+          - generic: 用时
+        - generic:
+          - generic: "0"
+          - generic: 正确数
+        - generic:
+          - generic: "0"
+          - generic: 错误数
+      - generic:
+        - button "返回首页"
+        - button "再玩一次"
+  - generic:
+    - generic:
+      - generic:
+        - button "知道了"
+  - generic:
+    - generic:
+      - generic: 📊 对战结果对比
+      - table:
+        - rowgroup:
+          - row "项目 玩家1 玩家2":
+            - columnheader "项目"
+            - columnheader "玩家1"
+            - columnheader "玩家2"
+        - rowgroup:
+          - row "用时 00:00 00:00":
+            - cell "用时"
+            - cell "00:00"
+            - cell "00:00"
+          - row "正确数 0 0":
+            - cell "正确数"
+            - cell "0"
+            - cell "0"
+          - row "错误数 0 0":
+            - cell "错误数"
+            - cell "0"
+            - cell "0"
+          - row "总得分 0 0":
+            - cell "总得分"
+            - cell "0"
+            - cell "0"
+      - generic:
+        - button "返回首页"
+        - button "再玩一次"
+  - generic [ref=e56]:
+    - generic [ref=e57]:
+      - heading "🗺️ 图层开关" [level=3] [ref=e58]
+      - button "×" [ref=e59] [cursor=pointer]
+    - generic [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]: 底图要素
+        - generic [ref=e63]:
+          - generic [ref=e64] [cursor=pointer]:
+            - checkbox "山脉 山脉" [ref=e65]
+            - img "山脉"
+            - generic [ref=e66]: 山脉
+          - generic [ref=e67] [cursor=pointer]:
+            - checkbox "省区 省区" [ref=e68]
+            - img "省区"
+            - generic [ref=e69]: 省区
+          - generic [ref=e70] [cursor=pointer]:
+            - checkbox "经纬网 经纬网" [ref=e71]
+            - img "经纬网"
+            - generic [ref=e72]: 经纬网
+      - generic [ref=e73]:
+        - generic [ref=e74]: 练习辅助
+        - generic [ref=e75] [cursor=pointer]:
+          - checkbox "目标提示" [ref=e76]
+          - generic [ref=e77]: 目标提示

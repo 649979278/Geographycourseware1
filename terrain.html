@@ -87,6 +87,61 @@
 
     <!-- 主体区域 -->
     <div class="map-main" id="mapMain">
+        <!-- 双屏模式包装器（默认隐藏） -->
+        <div class="dual-screen-wrapper" id="dualScreenWrapper">
+            <!-- PK 强制结算顶部横幅 -->
+            <div class="pk-force-end-banner" id="pkForceEndBanner">
+                <span class="pk-force-end-icon">⏱️</span>
+                <span class="pk-force-end-text" id="pkForceEndText">10秒后强制结算</span>
+            </div>
+            <div class="dual-screen-content" id="dualScreenContent">
+                <!-- 左屏面板 -->
+                <div class="dual-panel left-panel">
+                <aside class="sidebar" id="sidebar1">
+                    <div class="sidebar-header">
+                        <span>玩家1</span>
+                        <span class="sidebar-count"><span id="remainCount1">0</span> / <span id="totalCount1">0</span></span>
+                    </div>
+                    <div class="label-list" id="labelList1"></div>
+                </aside>
+                <div class="map-container" id="mapContainer1">
+                    <img class="base-map-img" id="baseMapImg1" src="images/1、底图.png" alt="底图">
+                    <div class="overlay-container" id="overlayContainer1"></div>
+                    <div class="handle-container" id="handleContainer1"></div>
+                    <svg class="map-svg" id="mapSvg1"></svg>
+                    <!-- 玩家1结算遮罩 -->
+                    <div class="player-result-overlay" id="player1ResultOverlay">
+                        <div class="result-title" id="player1ResultTitle">挑战完成！</div>
+                        <div class="result-stats" id="player1ResultStats"></div>
+                        <div id="player1ResultActions"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- 右屏面板 -->
+            <div class="dual-panel right-panel">
+                <div class="map-container" id="mapContainer2">
+                    <img class="base-map-img" id="baseMapImg2" src="images/1、底图.png" alt="底图">
+                    <div class="overlay-container" id="overlayContainer2"></div>
+                    <div class="handle-container" id="handleContainer2"></div>
+                    <svg class="map-svg" id="mapSvg2"></svg>
+                    <!-- 玩家2结算遮罩 -->
+                    <div class="player-result-overlay" id="player2ResultOverlay">
+                        <div class="result-title" id="player2ResultTitle">挑战完成！</div>
+                        <div class="result-stats" id="player2ResultStats"></div>
+                        <div id="player2ResultActions"></div>
+                    </div>
+                </div>
+                <aside class="sidebar" id="sidebar2">
+                    <div class="sidebar-header">
+                        <span>玩家2</span>
+                        <span class="sidebar-count"><span id="remainCount2">0</span> / <span id="totalCount2">0</span></span>
+                    </div>
+                    <div class="label-list" id="labelList2"></div>
+                </aside>
+            </div>
+            </div>
+        </div>
+
         <!-- 侧边标签栏 -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -184,6 +239,32 @@
             <div class="modal-body" id="descBody"></div>
             <div class="modal-actions">
                 <button class="btn btn-primary" id="descCloseBtn">知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 对战结果对比弹窗 -->
+    <div class="modal-overlay comparison-modal" id="comparisonModal">
+        <div class="modal-content">
+            <div class="modal-title">📊 对战结果对比</div>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th id="compareName1">玩家1</th>
+                        <th id="compareName2">玩家2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>用时</td><td id="compareTime1">00:00</td><td id="compareTime2">00:00</td></tr>
+                    <tr><td>正确数</td><td id="compareCorrect1">0</td><td id="compareCorrect2">0</td></tr>
+                    <tr><td>错误数</td><td id="compareWrong1">0</td><td id="compareWrong2">0</td></tr>
+                    <tr><td>总得分</td><td id="compareScore1">0</td><td id="compareScore2">0</td></tr>
+                </tbody>
+            </table>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="comparisonHomeBtn">返回首页</button>
+                <button class="btn btn-primary" id="comparisonRestartBtn">再玩一次</button>
             </div>
         </div>
     </div>
@@ -370,14 +451,28 @@
             // 双人 PK 模式
             pk: {
                 active: false,
-                currentPlayer: 1,
-                scores: [0, 0],
-                playerNames: ['', ''], // 两位玩家姓名
-                placedBy: {}, // itemId -> playerNumber
-                turnTime: 20,
-                turnInterval: null,
-                totalTimer: 0,
-                totalInterval: null
+                timer: 0,
+                timerInterval: null,
+                forceEndTimer: null,
+                forceEndCountdown: 10,
+                player1: {
+                    name: '',
+                    score: 0,
+                    correctCount: 0,
+                    wrongCount: 0,
+                    placedIds: new Set(),
+                    finished: false,
+                    finishedAt: null
+                },
+                player2: {
+                    name: '',
+                    score: 0,
+                    correctCount: 0,
+                    wrongCount: 0,
+                    placedIds: new Set(),
+                    finished: false,
+                    finishedAt: null
+                }
             },
             // 闯关模式
             challenge: {
@@ -418,7 +513,24 @@
             startBtn: document.getElementById('startBtn'),
             restartBtn: document.getElementById('restartBtn'),
             modeSwitch: document.getElementById('modeSwitch'),
-            toolbar: document.getElementById('toolbar')
+            toolbar: document.getElementById('toolbar'),
+            dualScreenWrapper: document.getElementById('dualScreenWrapper'),
+            mapSvg1: document.getElementById('mapSvg1'),
+            mapSvg2: document.getElementById('mapSvg2'),
+            mapContainer1: document.getElementById('mapContainer1'),
+            mapContainer2: document.getElementById('mapContainer2'),
+            overlayContainer1: document.getElementById('overlayContainer1'),
+            overlayContainer2: document.getElementById('overlayContainer2'),
+            handleContainer1: document.getElementById('handleContainer1'),
+            handleContainer2: document.getElementById('handleContainer2'),
+            labelList1: document.getElementById('labelList1'),
+            labelList2: document.getElementById('labelList2'),
+            sidebar1: document.getElementById('sidebar1'),
+            sidebar2: document.getElementById('sidebar2'),
+            remainCount1: document.getElementById('remainCount1'),
+            remainCount2: document.getElementById('remainCount2'),
+            totalCount1: document.getElementById('totalCount1'),
+            totalCount2: document.getElementById('totalCount2')
         };
 
         // ============================================================
@@ -474,6 +586,8 @@
                 });
                 _ro.observe(els.mapContainer);
             }
+
+            initDualEngines();
 
             // 加载游戏配置（从全局 JS 变量读取，兼容 file:// 协议）
             state.gameConfig = window.GAME_CONFIG || {
@@ -540,6 +654,103 @@
                 handleContainer.style.width = width;
                 handleContainer.style.height = height;
             }
+        }
+
+        function syncDualOverlayContainers() {
+            [1, 2].forEach(idx => {
+                const container = document.getElementById('mapContainer' + idx);
+                const overlayContainer = document.getElementById('overlayContainer' + idx);
+                const handleContainer = document.getElementById('handleContainer' + idx);
+                if (!container || !overlayContainer) return;
+                const containerRect = container.getBoundingClientRect();
+                const baseImg = document.getElementById('baseMapImg' + idx);
+                if (!baseImg) return;
+                const imgRect = baseImg.getBoundingClientRect();
+                const imgAspect = (baseImg.naturalWidth && baseImg.naturalHeight)
+                    ? baseImg.naturalWidth / baseImg.naturalHeight
+                    : MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
+                const elAspect = imgRect.width / imgRect.height;
+                let visX, visY, visW, visH;
+                if (elAspect > imgAspect) {
+                    visH = imgRect.height;
+                    visW = imgRect.height * imgAspect;
+                    visX = imgRect.x + (imgRect.width - visW) / 2;
+                    visY = imgRect.y;
+                } else {
+                    visW = imgRect.width;
+                    visH = imgRect.width / imgAspect;
+                    visX = imgRect.x;
+                    visY = imgRect.y + (imgRect.height - visH) / 2;
+                }
+                const left = (visX - containerRect.left) + 'px';
+                const top = (visY - containerRect.top) + 'px';
+                const width = visW + 'px';
+                const height = visH + 'px';
+                overlayContainer.style.position = 'absolute';
+                overlayContainer.style.inset = '';
+                overlayContainer.style.left = left;
+                overlayContainer.style.top = top;
+                overlayContainer.style.width = width;
+                overlayContainer.style.height = height;
+                if (handleContainer) {
+                    handleContainer.style.position = 'absolute';
+                    handleContainer.style.inset = '';
+                    handleContainer.style.left = left;
+                    handleContainer.style.top = top;
+                    handleContainer.style.width = width;
+                    handleContainer.style.height = height;
+                }
+            });
+        }
+
+        function initDualEngines() {
+            if (!els.mapSvg1 || !els.mapSvg2) return;
+            state.mapEngine1 = initSvgMap('#mapSvg1');
+            state.mapEngine2 = initSvgMap('#mapSvg2');
+            state.overlayEngine1 = createOverlayEngine({
+                container: els.overlayContainer1,
+                baseWidth: 2981,
+                baseHeight: 2180,
+                mountainSrc: 'images/中国的山脉.jpg',
+                regionSrc: 'images/中国地形图.jpg',
+                onChange: saveOverlayCalibrationToStorage
+            });
+            state.overlayEngine2 = createOverlayEngine({
+                container: els.overlayContainer2,
+                baseWidth: 2981,
+                baseHeight: 2180,
+                mountainSrc: 'images/中国的山脉.jpg',
+                regionSrc: 'images/中国地形图.jpg',
+                onChange: saveOverlayCalibrationToStorage
+            });
+            state.layerManager1 = createLayerManager(state.mapEngine1, state.overlayEngine1);
+            state.layerManager2 = createLayerManager(state.mapEngine2, state.overlayEngine2);
+            requestAnimationFrame(() => {
+                syncDualOverlayContainers();
+                if (state.overlayEngine1) state.overlayEngine1.renderOverlays();
+                if (state.overlayEngine2) state.overlayEngine2.renderOverlays();
+            });
+
+            // 为顶部工具栏开关绑定 capturing 事件，在 PK 模式下拦截并同步左右屏
+            document.querySelectorAll('.layer-toggle[data-layer]').forEach(el => {
+                const layerName = el.dataset.layer;
+                const checkbox = el.querySelector('input[type="checkbox"]');
+                if (!checkbox) return;
+                checkbox.addEventListener('change', (e) => {
+                    if (state.pk.active && state.layerManager1 && state.layerManager2) {
+                        e.stopImmediatePropagation();
+                        state.layerManager1.toggle(layerName, checkbox.checked);
+                        state.layerManager2.toggle(layerName, checkbox.checked);
+                        if (['mountain', 'admin', 'grid'].includes(layerName)) {
+                            const newSrc = state.layerManager1.getBaseImagePath();
+                            const img1 = document.getElementById('baseMapImg1');
+                            const img2 = document.getElementById('baseMapImg2');
+                            if (img1) img1.src = newSrc;
+                            if (img2) img2.src = newSrc;
+                        }
+                    }
+                }, true);
+            });
         }
 
         /**
@@ -754,14 +965,27 @@
                 if (!checkbox) return;
 
                 // 同步当前状态
-                if (state.layerManager) {
-                    const currentState = state.layerManager.getState(layerName);
-                    checkbox.checked = currentState;
-                    el.classList.toggle('active', currentState);
+                let currentState = false;
+                if (state.pk.active && state.layerManager1) {
+                    currentState = state.layerManager1.getState(layerName);
+                } else if (state.layerManager) {
+                    currentState = state.layerManager.getState(layerName);
                 }
+                checkbox.checked = currentState;
+                el.classList.toggle('active', currentState);
 
                 checkbox.addEventListener('change', () => {
-                    if (state.layerManager) {
+                    if (state.pk.active) {
+                        if (state.layerManager1) state.layerManager1.toggle(layerName, checkbox.checked);
+                        if (state.layerManager2) state.layerManager2.toggle(layerName, checkbox.checked);
+                        if (state.layerManager1 && (layerName === 'mountain' || layerName === 'admin' || layerName === 'grid')) {
+                            const newSrc = state.layerManager1.getBaseImagePath();
+                            const img1 = document.getElementById('baseMapImg1');
+                            const img2 = document.getElementById('baseMapImg2');
+                            if (img1) img1.src = newSrc;
+                            if (img2) img2.src = newSrc;
+                        }
+                    } else if (state.layerManager) {
                         state.layerManager.toggle(layerName, checkbox.checked);
                     }
                 });
@@ -770,15 +994,18 @@
 
         function enterPkMode() {
             state.pk.active = true;
-            document.getElementById('pkInfo').style.display = 'flex';
+            document.getElementById('pkInfo').style.display = 'none';
             els.scoreDisplay.parentElement.style.display = 'none';
             els.timerDisplay.parentElement.style.display = 'none';
             els.hintBtn.style.display = 'none';
             const levelName = els.levelName.textContent;
             document.getElementById('startTitle').textContent = '双人PK - ' + levelName;
-            document.getElementById('startDesc').textContent = '两位玩家轮流答题，答对继续，答错换对手！';
+            document.getElementById('startDesc').textContent = '两位玩家同时答题，先完成者获胜！';
             document.getElementById('nameInputSingle').style.display = 'none';
             document.getElementById('nameInputPk').style.display = 'flex';
+            document.querySelectorAll('.layer-toggle[data-layer="overlayMountain"], .layer-toggle[data-layer="overlayRegion"], .layer-toggle[data-layer="overlayAdmin"], .layer-toggle[data-layer="dropZones"]').forEach(el => {
+                el.style.display = 'none';
+            });
             resetPkState();
         }
 
@@ -792,8 +1019,15 @@
             document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
             document.getElementById('nameInputSingle').style.display = '';
             document.getElementById('nameInputPk').style.display = 'none';
-            clearInterval(state.pk.turnInterval);
-            clearInterval(state.pk.totalInterval);
+            document.querySelectorAll('.layer-toggle[data-layer="overlayMountain"], .layer-toggle[data-layer="overlayRegion"], .layer-toggle[data-layer="overlayAdmin"], .layer-toggle[data-layer="dropZones"]').forEach(el => {
+                el.style.display = '';
+            });
+            clearInterval(state.pk.timerInterval);
+            clearInterval(state.pk.forceEndTimer);
+            document.body.classList.remove('dual-screen-mode');
+            if (els.dualScreenWrapper) els.dualScreenWrapper.style.display = 'none';
+            if (els.sidebar) els.sidebar.style.display = '';
+            if (els.mapContainer) els.mapContainer.style.display = '';
         }
 
         function enterChallengeMode() {
@@ -901,14 +1135,12 @@
         }
 
         function resetPkState() {
-            state.pk.currentPlayer = 1;
-            state.pk.scores = [0, 0];
-            state.pk.placedBy = {};
-            state.pk.turnTime = state.gameConfig.pk.turnTimeLimit;
-            state.pk.totalTimer = 0;
-            clearInterval(state.pk.turnInterval);
-            clearInterval(state.pk.totalInterval);
-            updatePkUI();
+            state.pk.timer = 0;
+            state.pk.timerInterval = null;
+            state.pk.forceEndTimer = null;
+            state.pk.forceEndCountdown = 10;
+            state.pk.player1 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null };
+            state.pk.player2 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null };
         }
 
         function bindGameControls() {
@@ -930,17 +1162,32 @@
             const overlayAdminToggle = document.querySelector('.layer-toggle[data-layer="overlayAdmin"] input');
             if (overlayMountainToggle) {
                 overlayMountainToggle.addEventListener('change', () => {
-                    state.overlayEngine.setVisible('mountainBlank', overlayMountainToggle.checked);
+                    if (state.pk.active && state.overlayEngine1 && state.overlayEngine2) {
+                        state.overlayEngine1.setVisible('mountainBlank', overlayMountainToggle.checked);
+                        state.overlayEngine2.setVisible('mountainBlank', overlayMountainToggle.checked);
+                    } else {
+                        state.overlayEngine.setVisible('mountainBlank', overlayMountainToggle.checked);
+                    }
                 });
             }
             if (overlayRegionToggle) {
                 overlayRegionToggle.addEventListener('change', () => {
-                    state.overlayEngine.setVisible('terrainRegion', overlayRegionToggle.checked);
+                    if (state.pk.active && state.overlayEngine1 && state.overlayEngine2) {
+                        state.overlayEngine1.setVisible('terrainRegion', overlayRegionToggle.checked);
+                        state.overlayEngine2.setVisible('terrainRegion', overlayRegionToggle.checked);
+                    } else {
+                        state.overlayEngine.setVisible('terrainRegion', overlayRegionToggle.checked);
+                    }
                 });
             }
             if (overlayAdminToggle) {
                 overlayAdminToggle.addEventListener('change', () => {
-                    state.overlayEngine.setVisible('adminOutline', overlayAdminToggle.checked);
+                    if (state.pk.active && state.overlayEngine1 && state.overlayEngine2) {
+                        state.overlayEngine1.setVisible('adminOutline', overlayAdminToggle.checked);
+                        state.overlayEngine2.setVisible('adminOutline', overlayAdminToggle.checked);
+                    } else {
+                        state.overlayEngine.setVisible('adminOutline', overlayAdminToggle.checked);
+                    }
                 });
             }
 
@@ -959,6 +1206,22 @@
             document.getElementById('resultHomeBtn').addEventListener('click', () => {
                 location.href = 'index.html';
             });
+
+            // 对比弹窗按钮绑定
+            const comparisonHomeBtn = document.getElementById('comparisonHomeBtn');
+            const comparisonRestartBtn = document.getElementById('comparisonRestartBtn');
+            if (comparisonHomeBtn) {
+                comparisonHomeBtn.addEventListener('click', () => {
+                    document.getElementById('comparisonModal')?.classList.remove('active');
+                    location.href = 'index.html';
+                });
+            }
+            if (comparisonRestartBtn) {
+                comparisonRestartBtn.addEventListener('click', () => {
+                    document.getElementById('comparisonModal')?.classList.remove('active');
+                    restartGame();
+                });
+            }
             document.getElementById('descCloseBtn').addEventListener('click', () => {
                 document.getElementById('descModal').classList.remove('active');
             });
@@ -1030,6 +1293,22 @@
             state.mapEngine.layers.regions.innerHTML = '';
             state.mapEngine.clearDropZones();
             state.mapEngine.clearAnswers();
+
+            // 清空双屏地图上的旧标记（如果存在）
+            if (state.mapEngine1) {
+                state.mapEngine1.layers.mountains.innerHTML = '';
+                state.mapEngine1.layers.lines.innerHTML = '';
+                state.mapEngine1.layers.regions.innerHTML = '';
+                state.mapEngine1.clearDropZones();
+                state.mapEngine1.clearAnswers();
+            }
+            if (state.mapEngine2) {
+                state.mapEngine2.layers.mountains.innerHTML = '';
+                state.mapEngine2.layers.lines.innerHTML = '';
+                state.mapEngine2.layers.regions.innerHTML = '';
+                state.mapEngine2.clearDropZones();
+                state.mapEngine2.clearAnswers();
+            }
 
             // 渲染地图标记（初始可见，开始游戏后隐藏未放置的）
             state.items.forEach(item => {
@@ -1376,7 +1655,8 @@
                     showToast('姓名只能包含数字、英文、中文和常见标点符号', 'error');
                     return;
                 }
-                state.pk.playerNames = [p1Name, p2Name];
+                state.pk.player1.name = p1Name;
+                state.pk.player2.name = p2Name;
             } else {
                 const name = document.getElementById('playerNameSingle').value.trim();
                 if (!name) {
@@ -1391,17 +1671,25 @@
             }
             state.isPlaying = true;
             els.startOverlay.style.display = 'none';
-            els.sidebar.style.display = '';
 
             if (state.pk.active) {
+                // 双屏模式
+                document.body.classList.add('dual-screen-mode');
+                els.dualScreenWrapper.style.display = 'flex';
+                els.sidebar.style.display = 'none';
+                els.mapContainer.style.display = 'none';
+                renderDualGameData();
+                setupDualDragAndDrop();
                 startPkGame();
             } else {
+                els.sidebar.style.display = '';
+                els.mapContainer.style.display = '';
                 state.timerInterval = setInterval(() => {
                     state.timer++;
                     els.timerDisplay.textContent = formatTime(state.timer);
                 }, 1000);
+                setupDragAndDrop();
             }
-            setupDragAndDrop();
             updateUI();
         }
 
@@ -1469,49 +1757,39 @@
 
         function startPkGame() {
             resetPkState();
+            state.pk.totalTimer = 0;
             state.pk.totalInterval = setInterval(() => {
                 state.pk.totalTimer++;
             }, 1000);
-            startPkTurn();
         }
 
-        function startPkTurn() {
-            state.pk.turnTime = state.gameConfig.pk.turnTimeLimit;
-            updatePkUI();
-            clearInterval(state.pk.turnInterval);
-            state.pk.turnInterval = setInterval(() => {
-                state.pk.turnTime--;
-                document.getElementById('pkTurnTimer').textContent = state.pk.turnTime;
-                if (state.pk.turnTime <= 0) {
-                    const name = state.pk.playerNames[state.pk.currentPlayer - 1] || ('玩家' + state.pk.currentPlayer);
-                    showToast(name + '超时！切换回合', 'info');
-                    switchTurn();
+        function startPkForceEndTimer() {
+            if (state.pk.forceEndTimer) return;
+            state.pk.forceEndCountdown = 10;
+            const unfinishedIdx = state.pk.player1.finished ? 2 : 1;
+            const unfinishedPlayer = state.pk['player' + unfinishedIdx];
+            const banner = document.getElementById('pkForceEndBanner');
+            const bannerText = document.getElementById('pkForceEndText');
+            if (banner) banner.classList.add('active');
+            if (bannerText) bannerText.textContent = (unfinishedPlayer.name || ('玩家' + unfinishedIdx)) + ' 剩余 10 秒 强制结算';
+            state.pk.forceEndTimer = setInterval(() => {
+                state.pk.forceEndCountdown--;
+                if (bannerText) {
+                    bannerText.textContent = (unfinishedPlayer.name || ('玩家' + unfinishedIdx)) + ' 剩余 ' + state.pk.forceEndCountdown + ' 秒 强制结算';
+                }
+                if (state.pk.forceEndCountdown <= 0) {
+                    clearInterval(state.pk.forceEndTimer);
+                    state.pk.forceEndTimer = null;
+                    if (banner) banner.classList.remove('active');
+                    forceEndPkGame();
                 }
             }, 1000);
         }
 
-        function switchTurn() {
-            state.pk.currentPlayer = state.pk.currentPlayer === 1 ? 2 : 1;
-            startPkTurn();
-        }
-
-        function updatePkUI() {
-            document.getElementById('pkScore1').textContent = state.pk.scores[0];
-            document.getElementById('pkScore2').textContent = state.pk.scores[1];
-            document.getElementById('pkTurnTimer').textContent = state.pk.turnTime;
-            const p1 = document.getElementById('pkP1');
-            const p2 = document.getElementById('pkP2');
-            const p1Name = state.pk.playerNames[0] || '玩家1';
-            const p2Name = state.pk.playerNames[1] || '玩家2';
-            p1.querySelector('span:first-child').textContent = p1Name;
-            p2.querySelector('span:first-child').textContent = p2Name;
-            if (state.pk.currentPlayer === 1) {
-                p1.style.borderColor = '#4caf50';
-                p2.style.borderColor = 'transparent';
-            } else {
-                p1.style.borderColor = 'transparent';
-                p2.style.borderColor = '#ff9800';
-            }
+        function forceEndPkGame() {
+            if (!state.isPlaying) return;
+            stopGame();
+            showComparison();
         }
 
         function restartGame() {
@@ -1522,6 +1800,15 @@
                 els.sidebar.style.display = 'none';
                 state.challenge.active = false;
                 enterChallengeMode();
+            } else if (state.pk.active) {
+                // PK 模式重开
+                document.querySelectorAll('.player-result-overlay').forEach(el => el.classList.remove('active'));
+                document.getElementById('comparisonModal')?.classList.remove('active');
+                document.getElementById('pkForceEndBanner')?.classList.remove('active');
+                els.dualScreenWrapper.style.display = 'none';
+                document.body.classList.remove('dual-screen-mode');
+                const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
+                setupLevel(levelToRestore);
             } else {
                 const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
                 setupLevel(levelToRestore);
@@ -1533,6 +1820,7 @@
             clearInterval(state.timerInterval);
             clearInterval(state.pk.turnInterval);
             clearInterval(state.pk.totalInterval);
+            clearInterval(state.pk.forceEndTimer);
             clearInterval(state.challenge.totalInterval);
             if (state.dragEl) {
                 state.dragEl.remove();
@@ -1547,7 +1835,7 @@
         function endGame() {
             stopGame();
             if (state.pk.active) {
-                showPkResult();
+                showComparison();
             } else {
                 const stars = calculateStars(state.timer, state.wrongCount);
                 showResult(stars);
@@ -1598,31 +1886,54 @@
             els.resultModal.classList.add('active');
         }
 
-        function showPkResult() {
-            const p1Score = state.pk.scores[0];
-            const p2Score = state.pk.scores[1];
-            const p1Placed = Object.values(state.pk.placedBy).filter(p => p === 1).length;
-            const p2Placed = Object.values(state.pk.placedBy).filter(p => p === 2).length;
-            const totalTime = formatTime(state.pk.totalTimer);
-            const p1Name = state.pk.playerNames[0] || '玩家1';
-            const p2Name = state.pk.playerNames[1] || '玩家2';
+        function showPlayerResult(playerNum) {
+            const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
+            const mapContainer = playerNum === 1 ? els.mapContainer1 : els.mapContainer2;
+            if (!mapContainer) return;
 
-            let title;
-            if (p1Score > p2Score) title = '🎉 ' + p1Name + ' 获胜！';
-            else if (p2Score > p1Score) title = '🎉 ' + p2Name + ' 获胜！';
-            else title = '🤝 平局！';
+            const overlay = document.createElement('div');
+            overlay.className = 'player-result-overlay';
+            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff;border-radius:12px;';
 
-            document.getElementById('resultTitle').textContent = title;
-            document.getElementById('resultStars').style.display = 'none';
+            const name = player.name || ('玩家' + playerNum);
+            const time = formatTime(state.pk.totalTimer);
 
-            document.querySelector('.result-stats').innerHTML = `
-                <div class="result-stat"><div class="stat-value" style="color:#4caf50;">${p1Score}</div><div class="stat-label">${p1Name} 得分</div></div>
-                <div class="result-stat"><div class="stat-value" style="color:#ff9800;">${p2Score}</div><div class="stat-label">${p2Name} 得分</div></div>
-                <div class="result-stat"><div class="stat-value">${p1Placed}</div><div class="stat-label">${p1Name} 标注</div></div>
-                <div class="result-stat"><div class="stat-value">${p2Placed}</div><div class="stat-label">${p2Name} 标注</div></div>
+            overlay.innerHTML = `
+                <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${name} 完成！</div>
+                <div style="font-size:18px;margin-bottom:8px;">得分: <span style="color:#ffd700;font-weight:700;">${player.score}</span></div>
+                <div style="font-size:18px;margin-bottom:8px;">正确: ${player.correctCount}</div>
+                <div style="font-size:18px;margin-bottom:8px;">错误: ${player.wrongCount}</div>
+                <div style="font-size:16px;color:#ccc;">用时: ${time}</div>
             `;
 
-            els.resultModal.classList.add('active');
+            mapContainer.style.position = 'relative';
+            mapContainer.appendChild(overlay);
+        }
+
+        function showComparison() {
+            const p1 = state.pk.player1;
+            const p2 = state.pk.player2;
+            const p1Name = p1.name || '玩家1';
+            const p2Name = p2.name || '玩家2';
+
+            let title;
+            if (p1.score > p2.score) title = p1Name + ' 获胜！';
+            else if (p2.score > p1.score) title = p2Name + ' 获胜！';
+            else title = '平局！';
+
+            document.querySelector('#comparisonModal .modal-title').textContent = title;
+            document.getElementById('compareName1').textContent = p1Name;
+            document.getElementById('compareName2').textContent = p2Name;
+            document.getElementById('compareTime1').textContent = formatTime(p1.finishedAt ?? state.pk.totalTimer);
+            document.getElementById('compareTime2').textContent = formatTime(p2.finishedAt ?? state.pk.totalTimer);
+            document.getElementById('compareCorrect1').textContent = p1.correctCount;
+            document.getElementById('compareCorrect2').textContent = p2.correctCount;
+            document.getElementById('compareWrong1').textContent = p1.wrongCount;
+            document.getElementById('compareWrong2').textContent = p2.wrongCount;
+            document.getElementById('compareScore1').textContent = p1.score;
+            document.getElementById('compareScore2').textContent = p2.score;
+
+            document.getElementById('comparisonModal').classList.add('active');
         }
 
         function showChallengeSuccess() {
@@ -1855,11 +2166,10 @@
             }
 
             if (state.pk.active) {
-                // PK 模式：当前玩家得分，记录归属
+                // PK 模式：当前玩家得分，记录归属（旧逻辑，保留兼容）
                 const pIdx = state.pk.currentPlayer - 1;
                 state.pk.scores[pIdx] += scoreCfg.correct;
                 state.pk.placedBy[item.id] = state.pk.currentPlayer;
-                updatePkUI();
             } else {
                 state.score += scoreCfg.correct;
             }
@@ -1963,6 +2273,309 @@
                 showToast('位置不对，再试一次', 'error');
                 updateUI();
             }
+        }
+
+        // ============================================================
+        // 双屏 PK 拖拽交互
+        // ============================================================
+
+        function setupDualDragAndDrop() {
+            if (els.labelList1) {
+                els.labelList1.removeEventListener('pointerdown', onPointerDownDual);
+                els.labelList1.addEventListener('pointerdown', onPointerDownDual);
+            }
+            if (els.labelList2) {
+                els.labelList2.removeEventListener('pointerdown', onPointerDownDual);
+                els.labelList2.addEventListener('pointerdown', onPointerDownDual);
+            }
+        }
+
+        function onPointerDownDual(e) {
+            if (!state.isPlaying) return;
+            const label = e.target.closest('.drag-label');
+            if (!label || label.classList.contains('placed')) return;
+
+            e.preventDefault();
+            try { label.setPointerCapture(e.pointerId); } catch (_) {}
+            const itemId = label.dataset.id;
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            // 确定玩家
+            const listEl = label.closest('.label-list');
+            const playerNum = listEl === els.labelList1 ? 1 : 2;
+            const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
+            if (player.finished) return;
+            if (player.placedIds.has(itemId)) return;
+
+            state.draggedItem = item;
+            label.classList.add('dragging');
+
+            const rect = label.getBoundingClientRect();
+            const dragEl = document.createElement('div');
+            dragEl.className = 'drag-label dragging';
+            dragEl.textContent = label.dataset.name;
+            dragEl.style.position = 'fixed';
+            dragEl.style.left = rect.left + 'px';
+            dragEl.style.top = rect.top + 'px';
+            dragEl.style.width = rect.width + 'px';
+            dragEl.style.zIndex = 2000;
+            dragEl.style.pointerEvents = 'none';
+            dragEl.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+            document.body.appendChild(dragEl);
+            state.dragEl = dragEl;
+
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
+            function onMove(ev) {
+                dragEl.style.left = (ev.clientX - offsetX) + 'px';
+                dragEl.style.top = (ev.clientY - offsetY) + 'px';
+            }
+
+            function onUp(ev) {
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup', onUp);
+                label.classList.remove('dragging');
+                dragEl.remove();
+                state.dragEl = null;
+
+                handleDropDual(ev.clientX, ev.clientY, item, label, playerNum);
+            }
+
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup', onUp);
+        }
+
+        function handleDropDual(clientX, clientY, item, labelEl, playerNum) {
+            const mapContainer = playerNum === 1 ? els.mapContainer1 : els.mapContainer2;
+            const mapSvg = playerNum === 1 ? els.mapSvg1 : els.mapSvg2;
+            const mapEngine = playerNum === 1 ? state.mapEngine1 : state.mapEngine2;
+            if (!mapContainer || !mapSvg || !mapEngine) return;
+
+            const containerRect = mapContainer.getBoundingClientRect();
+            if (
+                clientX < containerRect.left || clientX > containerRect.right ||
+                clientY < containerRect.top || clientY > containerRect.bottom
+            ) {
+                return;
+            }
+
+            const svgPos = mapEngine.screenToSvg(clientX, clientY);
+            const dropRadius = (item.dropRadius || 50) * 1.5;
+
+            let dist = Infinity;
+            let targetPos = null;
+            let isInsideBoundary = false;
+
+            if (item.point) {
+                targetPos = item.point;
+                const dx = svgPos.x - targetPos.x;
+                const dy = svgPos.y - targetPos.y;
+                dist = Math.sqrt(dx * dx + dy * dy);
+            } else if (item.points && item.points.length) {
+                for (let i = 0; i < item.points.length; i++) {
+                    const p = item.points[i];
+                    const d = Math.sqrt((svgPos.x - p.x) ** 2 + (svgPos.y - p.y) ** 2);
+                    if (d < dist) {
+                        dist = d;
+                        targetPos = p;
+                    }
+                }
+                for (let i = 0; i < item.points.length - 1; i++) {
+                    const d = pointToSegmentDist(svgPos.x, svgPos.y, item.points[i], item.points[i + 1]);
+                    if (d < dist) {
+                        dist = d;
+                        targetPos = item.points[i];
+                    }
+                }
+            } else if (item.boundary && item.boundary.length) {
+                isInsideBoundary = pointInPolygon(svgPos.x, svgPos.y, item.boundary);
+                targetPos = item.center || item.boundary[0];
+                if (!isInsideBoundary) {
+                    dist = pointToPolygonDist(svgPos.x, svgPos.y, item.boundary);
+                }
+            } else if (item.center) {
+                targetPos = item.center;
+                const dx = svgPos.x - targetPos.x;
+                const dy = svgPos.y - targetPos.y;
+                dist = Math.sqrt(dx * dx + dy * dy);
+            }
+
+            if (!targetPos && !isInsideBoundary) return;
+
+            if (isInsideBoundary || dist <= dropRadius) {
+                handleCorrectDual(item, labelEl, targetPos, playerNum);
+            } else {
+                handleWrongDual(labelEl, playerNum);
+            }
+        }
+
+        function handleCorrectDual(item, labelEl, targetPos, playerNum) {
+            const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
+            const mapEngine = playerNum === 1 ? state.mapEngine1 : state.mapEngine2;
+            const mapSvg = playerNum === 1 ? els.mapSvg1 : els.mapSvg2;
+            if (!mapEngine || !mapSvg) return;
+
+            player.placedIds.add(item.id);
+            player.correctCount++;
+            const levelIdForScore = item.targetLevel || state.level;
+            const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === levelIdForScore)?.score || { correct: 10, wrong: -5, hint: -3 };
+            player.score += scoreCfg.correct;
+
+            labelEl.classList.add('placed');
+            labelEl.classList.remove('dragging');
+
+            mapEngine.setItemVisible(item.id, true);
+            mapEngine.addAnswerMarker(item, showDescription);
+
+            const ctm = mapSvg.getScreenCTM();
+            const svgPt = mapSvg.createSVGPoint();
+            svgPt.x = targetPos.x;
+            svgPt.y = targetPos.y;
+            const screenPt = svgPt.matrixTransform(ctm);
+            const targetScreenX = screenPt.x;
+            const targetScreenY = screenPt.y;
+
+            const flyEl = document.createElement('div');
+            flyEl.className = 'drag-label placed pulse-success';
+            flyEl.textContent = item.name;
+            flyEl.style.position = 'fixed';
+            const labelRect = labelEl.getBoundingClientRect();
+            flyEl.style.left = labelRect.left + 'px';
+            flyEl.style.top = labelRect.top + 'px';
+            flyEl.style.width = labelRect.width + 'px';
+            flyEl.style.zIndex = 1500;
+            flyEl.style.transition = 'all 0.5s cubic-bezier(0.2, 1, 0.3, 1)';
+            document.body.appendChild(flyEl);
+
+            requestAnimationFrame(() => {
+                flyEl.style.left = targetScreenX + 'px';
+                flyEl.style.top = targetScreenY + 'px';
+                flyEl.style.transform = 'scale(0.8)';
+                flyEl.style.opacity = '0';
+            });
+
+            setTimeout(() => flyEl.remove(), 500);
+
+            showFeedbackBadge(targetScreenX, targetScreenY, '+' + scoreCfg.correct, 'correct');
+            showToast(player.name + ' 答对了！+' + scoreCfg.correct, 'success');
+
+            updateDualCounts();
+
+            // 检查该玩家是否全部完成
+            if (player.placedIds.size >= state.items.length) {
+                player.finished = true;
+                player.finishedAt = state.pk.totalTimer;
+                showPlayerResult(playerNum);
+                // 若另一方也已完成，直接结束游戏；否则启动强制结算倒计时
+                const otherNum = playerNum === 1 ? 2 : 1;
+                const other = state.pk['player' + otherNum];
+                if (other.finished) {
+                    clearInterval(state.pk.forceEndTimer);
+                    state.pk.forceEndTimer = null;
+                    document.getElementById('pkForceEndBanner')?.classList.remove('active');
+                    endGame();
+                } else {
+                    startPkForceEndTimer();
+                }
+            }
+        }
+
+        function handleWrongDual(labelEl, playerNum) {
+            const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
+            player.wrongCount++;
+            labelEl.classList.add('shake');
+            setTimeout(() => labelEl.classList.remove('shake'), 400);
+
+            const rect = labelEl.getBoundingClientRect();
+            const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level)?.score || { wrong: -5 };
+            player.score = Math.max(0, player.score + scoreCfg.wrong);
+            showFeedbackBadge(rect.left + rect.width / 2, rect.top, scoreCfg.wrong + '', 'wrong');
+            showToast(player.name + ' 答错了，再试一次', 'error');
+            updateDualCounts();
+        }
+
+        // ============================================================
+        // 双屏 PK 渲染与计数
+        // ============================================================
+
+        function renderDualLabels() {
+            if (els.labelList1) {
+                els.labelList1.innerHTML = '';
+                const shuffled1 = shuffleArray(state.items.slice());
+                shuffled1.forEach(item => {
+                    if (state.pk.player1.placedIds.has(item.id)) return;
+                    const div = document.createElement('div');
+                    div.className = 'drag-label';
+                    div.textContent = item.name;
+                    div.dataset.id = item.id;
+                    div.dataset.name = item.name;
+                    els.labelList1.appendChild(div);
+                });
+            }
+            if (els.labelList2) {
+                els.labelList2.innerHTML = '';
+                const shuffled2 = shuffleArray(state.items.slice());
+                shuffled2.forEach(item => {
+                    if (state.pk.player2.placedIds.has(item.id)) return;
+                    const div = document.createElement('div');
+                    div.className = 'drag-label';
+                    div.textContent = item.name;
+                    div.dataset.id = item.id;
+                    div.dataset.name = item.name;
+                    els.labelList2.appendChild(div);
+                });
+            }
+            updateDualCounts();
+        }
+
+        function updateDualCounts() {
+            if (els.remainCount1) els.remainCount1.textContent = state.items.length - state.pk.player1.placedIds.size;
+            if (els.totalCount1) els.totalCount1.textContent = state.items.length;
+            if (els.remainCount2) els.remainCount2.textContent = state.items.length - state.pk.player2.placedIds.size;
+            if (els.totalCount2) els.totalCount2.textContent = state.items.length;
+        }
+
+        function renderDualGameData() {
+            if (!state.mapEngine1 || !state.mapEngine2) return;
+
+            // 同步图层状态
+            const baseStates = state.layerManager ? state.layerManager.getAllStates() : { base: true, mountains: false, regions: false, dropZones: false };
+            if (state.layerManager1) state.layerManager1.setStates(baseStates);
+            if (state.layerManager2) state.layerManager2.setStates(baseStates);
+
+            // 清空并渲染双屏地图标记
+            state.mapEngine1.layers.mountains.innerHTML = '';
+            state.mapEngine1.layers.lines.innerHTML = '';
+            state.mapEngine1.layers.regions.innerHTML = '';
+            state.mapEngine1.clearDropZones();
+            state.mapEngine1.clearAnswers();
+
+            state.mapEngine2.layers.mountains.innerHTML = '';
+            state.mapEngine2.layers.lines.innerHTML = '';
+            state.mapEngine2.layers.regions.innerHTML = '';
+            state.mapEngine2.clearDropZones();
+            state.mapEngine2.clearAnswers();
+
+            state.items.forEach(item => {
+                if (item.point) {
+                    state.mapEngine1.addMountainMarker(item, showDescription, true);
+                    state.mapEngine1.addDropZone(item, 'mountain');
+                    state.mapEngine2.addMountainMarker(item, showDescription, true);
+                    state.mapEngine2.addDropZone(item, 'mountain');
+                } else if (item.points && item.points.length) {
+                    state.mapEngine1.addPolyline(item, showDescription, true);
+                    state.mapEngine2.addPolyline(item, showDescription, true);
+                } else if (item.center || (item.boundary && item.boundary.length)) {
+                    state.mapEngine1.addRegionBoundary(item, showDescription, true);
+                    state.mapEngine1.addDropZone(item, 'region');
+                    state.mapEngine2.addRegionBoundary(item, showDescription, true);
+                    state.mapEngine2.addDropZone(item, 'region');
+                }
+            });
+
+            renderDualLabels();
         }
 
         function showFeedbackBadge(x, y, text, type) {

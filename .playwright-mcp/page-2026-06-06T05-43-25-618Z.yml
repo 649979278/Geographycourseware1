@@ -1,0 +1,363 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "← 返回首页" [ref=e3] [cursor=pointer]:
+      - /url: index.html
+    - generic [ref=e4]: 中国的地形
+    - button "🗺️ 图层" [ref=e5] [cursor=pointer]
+    - generic [ref=e6] [cursor=pointer]:
+      - checkbox "山脉图" [ref=e7]
+      - text: 山脉图
+    - generic [ref=e8] [cursor=pointer]:
+      - checkbox "地形图" [ref=e9]
+      - text: 地形图
+    - generic [ref=e10] [cursor=pointer]:
+      - checkbox "政区轮廓图" [checked] [ref=e11]
+      - text: 政区轮廓图
+    - generic [ref=e12] [cursor=pointer]:
+      - checkbox "目标提示" [ref=e13]
+      - text: 目标提示
+    - generic [ref=e14]:
+      - button "单人练习" [ref=e15] [cursor=pointer]
+      - button "双人PK" [ref=e16] [cursor=pointer]
+      - button "闯关模式" [ref=e17] [cursor=pointer]
+      - button "坐标采集" [ref=e18] [cursor=pointer]
+  - generic [ref=e19]:
+    - complementary [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: 待标注
+        - generic [ref=e23]: 25 / 25
+      - generic [ref=e24]:
+        - generic [ref=e25]: 大别山
+        - generic [ref=e26]: 太行山脉
+        - generic [ref=e27]: 阿尔金山
+        - generic [ref=e28]: 大兴安岭
+        - generic [ref=e29]: 阴山山脉
+        - generic [ref=e30]: 冈底斯山
+        - generic [ref=e31]: 大巴山
+        - generic [ref=e32]: 天山
+        - generic [ref=e33]: 唐古拉山
+        - generic [ref=e34]: 祁连山脉
+        - generic [ref=e35]: 贺兰山
+        - generic [ref=e36]: 台湾山脉
+        - generic [ref=e37]: 雪峰山
+        - generic [ref=e38]: 武夷山
+        - generic [ref=e39]: 秦岭
+        - generic [ref=e40]: 长白山
+        - generic [ref=e41]: 喜玛拉雅山
+        - generic [ref=e42]: 巫山
+        - generic [ref=e43]: 阿尔泰山
+        - generic [ref=e44]: 巴颜喀拉山
+        - generic [ref=e45]: 横断山脉
+        - generic [ref=e46]: 昆仑山脉
+        - generic [ref=e47]: 小兴安岭
+        - generic [ref=e48]: 南岭
+        - generic [ref=e49]: 燕山
+    - generic [ref=e50]:
+      - img "底图"
+      - img [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - generic: 长白山
+          - generic [ref=e69]:
+            - generic: 大兴安岭
+          - generic [ref=e85]:
+            - generic: 小兴安岭
+          - generic [ref=e95]:
+            - generic: 燕山
+          - generic [ref=e101]:
+            - generic: 阿尔泰山
+          - generic [ref=e113]:
+            - generic: 天山
+          - generic [ref=e121]:
+            - generic: 太行山脉
+          - generic [ref=e129]:
+            - generic: 阴山山脉
+          - generic [ref=e138]:
+            - generic: 贺兰山
+          - generic [ref=e144]:
+            - generic: 祁连山脉
+          - generic [ref=e156]:
+            - generic: 阿尔金山
+          - generic [ref=e167]:
+            - generic: 昆仑山脉
+          - generic [ref=e188]:
+            - generic: 冈底斯山
+          - generic [ref=e199]:
+            - generic: 喜玛拉雅山
+          - generic [ref=e227]:
+            - generic: 横断山脉
+          - generic [ref=e238]:
+            - generic: 唐古拉山
+          - generic [ref=e248]:
+            - generic: 巴颜喀拉山
+          - generic [ref=e261]:
+            - generic: 大巴山
+          - generic [ref=e272]:
+            - generic: 秦岭
+          - generic [ref=e287]:
+            - generic: 巫山
+          - generic [ref=e293]:
+            - generic: 雪峰山
+          - generic [ref=e301]:
+            - generic: 南岭
+          - generic [ref=e310]:
+            - generic: 武夷山
+          - generic [ref=e320]:
+            - generic: 大别山
+          - generic [ref=e328]:
+            - generic: 台湾山脉
+  - generic:
+    - generic:
+      - generic: 挑战完成！
+      - generic:
+        - generic: ⭐
+        - generic: ⭐
+        - generic: ⭐
+      - generic:
+        - generic:
+          - generic: "0"
+          - generic: 得分
+        - generic:
+          - generic: 00:00
+          - generic: 用时
+        - generic:
+          - generic: "0"
+          - generic: 正确数
+        - generic:
+          - generic: "0"
+          - generic: 错误数
+      - generic:
+        - button "返回首页"
+        - button "再玩一次"
+  - generic:
+    - generic:
+      - generic: 📊 对战结果对比
+      - table:
+        - rowgroup:
+          - row "项目 玩家1 玩家2":
+            - columnheader "项目"
+            - columnheader "玩家1"
+            - columnheader "玩家2"
+        - rowgroup:
+          - row "用时 00:00 00:00":
+            - cell "用时"
+            - cell "00:00"
+            - cell "00:00"
+          - row "正确数 0 0":
+            - cell "正确数"
+            - cell "0"
+            - cell "0"
+          - row "错误数 0 0":
+            - cell "错误数"
+            - cell "0"
+            - cell "0"
+          - row "总得分 0 0":
+            - cell "总得分"
+            - cell "0"
+            - cell "0"
+      - generic:
+        - button "返回首页"
+        - button "再玩一次"
+  - generic:
+    - generic:
+      - generic:
+        - button "知道了"
+  - generic [ref=e334]:
+    - button "⬇" [ref=e336] [cursor=pointer]
+    - generic [ref=e337]:
+      - generic [ref=e338]:
+        - button "📝 坐标采集" [ref=e339] [cursor=pointer]
+        - button "🔧 图层校准" [ref=e340] [cursor=pointer]
+      - generic [ref=e341]:
+        - heading "📝 坐标采集 点击地图添加" [level=3] [ref=e342]:
+          - generic [ref=e343]: 📝 坐标采集
+          - generic [ref=e344]: 点击地图添加
+        - generic [ref=e345]:
+          - generic [ref=e346]: 采集类型
+          - combobox [ref=e347]:
+            - option "山脉（单点）" [selected]
+            - option "线型（连续多点）"
+            - option "地形区中心（单点）"
+            - option "地形区边界（连续多点）"
+        - generic [ref=e348]:
+          - generic [ref=e349]: 目标关卡
+          - combobox [ref=e350]:
+            - option "山脉标注" [selected]
+            - option "地形区标注"
+        - generic [ref=e351]:
+          - generic [ref=e352]: 难度星级
+          - combobox [ref=e353]:
+            - option "⭐ 1星（简单）" [selected]
+            - option "⭐⭐ 2星（中等）"
+            - option "⭐⭐⭐ 3星（困难）"
+        - generic [ref=e354]:
+          - generic [ref=e355]: 名称
+          - textbox "如：大兴安岭" [ref=e356]
+        - generic [ref=e357]:
+          - generic [ref=e358]: 描述
+          - textbox "地理意义描述..." [ref=e359]
+        - generic [ref=e360]:
+          - generic [ref=e361]: 坐标（点击地图自动填充）
+          - textbox "x, y" [ref=e362]
+        - generic [ref=e363]:
+          - generic [ref=e364]: 范围半径 (px)
+          - spinbutton [ref=e365]: "50"
+        - generic [ref=e367] [cursor=pointer]:
+          - checkbox "显示已维护采集点" [checked] [ref=e368]
+          - text: 显示已维护采集点
+        - generic [ref=e369]:
+          - button "添加" [ref=e370] [cursor=pointer]
+          - button "撤销" [ref=e371] [cursor=pointer]
+          - button "清空" [ref=e372] [cursor=pointer]
+          - button "导出JSON" [ref=e373] [cursor=pointer]
+        - generic [ref=e374]:
+          - generic [ref=e375]:
+            - generic [ref=e376]: "[line] 长白山 (14个点) R=50 →山脉"
+            - generic [ref=e377]:
+              - button "编辑" [ref=e378] [cursor=pointer]
+              - button "删除" [ref=e379] [cursor=pointer]
+          - generic [ref=e380]:
+            - generic [ref=e381]: "[line] 大兴安岭 (14个点) R=50 →山脉"
+            - generic [ref=e382]:
+              - button "编辑" [ref=e383] [cursor=pointer]
+              - button "删除" [ref=e384] [cursor=pointer]
+          - generic [ref=e385]:
+            - generic [ref=e386]: "[line] 小兴安岭 (8个点) R=50 →山脉"
+            - generic [ref=e387]:
+              - button "编辑" [ref=e388] [cursor=pointer]
+              - button "删除" [ref=e389] [cursor=pointer]
+          - generic [ref=e390]:
+            - generic [ref=e391]: "[line] 燕山 (4个点) R=50 →山脉"
+            - generic [ref=e392]:
+              - button "编辑" [ref=e393] [cursor=pointer]
+              - button "删除" [ref=e394] [cursor=pointer]
+          - generic [ref=e395]:
+            - generic [ref=e396]: "[line] 阿尔泰山 (10个点) R=50 →山脉"
+            - generic [ref=e397]:
+              - button "编辑" [ref=e398] [cursor=pointer]
+              - button "删除" [ref=e399] [cursor=pointer]
+          - generic [ref=e400]:
+            - generic [ref=e401]: "[line] 天山 (6个点) R=50 →山脉"
+            - generic [ref=e402]:
+              - button "编辑" [ref=e403] [cursor=pointer]
+              - button "删除" [ref=e404] [cursor=pointer]
+          - generic [ref=e405]:
+            - generic [ref=e406]: "[line] 太行山脉 (6个点) R=50 →山脉"
+            - generic [ref=e407]:
+              - button "编辑" [ref=e408] [cursor=pointer]
+              - button "删除" [ref=e409] [cursor=pointer]
+          - generic [ref=e410]:
+            - generic [ref=e411]: "[line] 阴山山脉 (7个点) R=50 →山脉"
+            - generic [ref=e412]:
+              - button "编辑" [ref=e413] [cursor=pointer]
+              - button "删除" [ref=e414] [cursor=pointer]
+          - generic [ref=e415]:
+            - generic [ref=e416]: "[line] 贺兰山 (4个点) R=50 →山脉"
+            - generic [ref=e417]:
+              - button "编辑" [ref=e418] [cursor=pointer]
+              - button "删除" [ref=e419] [cursor=pointer]
+          - generic [ref=e420]:
+            - generic [ref=e421]: "[line] 祁连山脉 (10个点) R=50 →山脉"
+            - generic [ref=e422]:
+              - button "编辑" [ref=e423] [cursor=pointer]
+              - button "删除" [ref=e424] [cursor=pointer]
+          - generic [ref=e425]:
+            - generic [ref=e426]: "[line] 阿尔金山 (9个点) R=50 →山脉"
+            - generic [ref=e427]:
+              - button "编辑" [ref=e428] [cursor=pointer]
+              - button "删除" [ref=e429] [cursor=pointer]
+          - generic [ref=e430]:
+            - generic [ref=e431]: "[line] 昆仑山脉 (19个点) R=50 →山脉"
+            - generic [ref=e432]:
+              - button "编辑" [ref=e433] [cursor=pointer]
+              - button "删除" [ref=e434] [cursor=pointer]
+          - generic [ref=e435]:
+            - generic [ref=e436]: "[line] 冈底斯山 (9个点) R=50 →山脉"
+            - generic [ref=e437]:
+              - button "编辑" [ref=e438] [cursor=pointer]
+              - button "删除" [ref=e439] [cursor=pointer]
+          - generic [ref=e440]:
+            - generic [ref=e441]: "[line] 喜玛拉雅山 (26个点) R=50 →山脉"
+            - generic [ref=e442]:
+              - button "编辑" [ref=e443] [cursor=pointer]
+              - button "删除" [ref=e444] [cursor=pointer]
+          - generic [ref=e445]:
+            - generic [ref=e446]: "[line] 横断山脉 (9个点) R=50 →山脉"
+            - generic [ref=e447]:
+              - button "编辑" [ref=e448] [cursor=pointer]
+              - button "删除" [ref=e449] [cursor=pointer]
+          - generic [ref=e450]:
+            - generic [ref=e451]: "[line] 唐古拉山 (8个点) R=50 →山脉"
+            - generic [ref=e452]:
+              - button "编辑" [ref=e453] [cursor=pointer]
+              - button "删除" [ref=e454] [cursor=pointer]
+          - generic [ref=e455]:
+            - generic [ref=e456]: "[line] 巴颜喀拉山 (11个点) R=50 →山脉"
+            - generic [ref=e457]:
+              - button "编辑" [ref=e458] [cursor=pointer]
+              - button "删除" [ref=e459] [cursor=pointer]
+          - generic [ref=e460]:
+            - generic [ref=e461]: "[line] 大巴山 (9个点) R=50 →山脉"
+            - generic [ref=e462]:
+              - button "编辑" [ref=e463] [cursor=pointer]
+              - button "删除" [ref=e464] [cursor=pointer]
+          - generic [ref=e465]:
+            - generic [ref=e466]: "[line] 秦岭 (13个点) R=50 →山脉"
+            - generic [ref=e467]:
+              - button "编辑" [ref=e468] [cursor=pointer]
+              - button "删除" [ref=e469] [cursor=pointer]
+          - generic [ref=e470]:
+            - generic [ref=e471]: "[line] 巫山 (4个点) R=50 →山脉"
+            - generic [ref=e472]:
+              - button "编辑" [ref=e473] [cursor=pointer]
+              - button "删除" [ref=e474] [cursor=pointer]
+          - generic [ref=e475]:
+            - generic [ref=e476]: "[line] 雪峰山 (6个点) R=50 →山脉"
+            - generic [ref=e477]:
+              - button "编辑" [ref=e478] [cursor=pointer]
+              - button "删除" [ref=e479] [cursor=pointer]
+          - generic [ref=e480]:
+            - generic [ref=e481]: "[line] 南岭 (7个点) R=50 →山脉"
+            - generic [ref=e482]:
+              - button "编辑" [ref=e483] [cursor=pointer]
+              - button "删除" [ref=e484] [cursor=pointer]
+          - generic [ref=e485]:
+            - generic [ref=e486]: "[line] 武夷山 (8个点) R=50 →山脉"
+            - generic [ref=e487]:
+              - button "编辑" [ref=e488] [cursor=pointer]
+              - button "删除" [ref=e489] [cursor=pointer]
+          - generic [ref=e490]:
+            - generic [ref=e491]: "[line] 大别山 (6个点) R=50 →山脉"
+            - generic [ref=e492]:
+              - button "编辑" [ref=e493] [cursor=pointer]
+              - button "删除" [ref=e494] [cursor=pointer]
+          - generic [ref=e495]:
+            - generic [ref=e496]: "[line] 台湾山脉 (4个点) R=50 →山脉"
+            - generic [ref=e497]:
+              - button "编辑" [ref=e498] [cursor=pointer]
+              - button "删除" [ref=e499] [cursor=pointer]
+  - generic [ref=e500]:
+    - generic [ref=e501]:
+      - heading "🗺️ 图层开关" [level=3] [ref=e502]
+      - button "×" [ref=e503] [cursor=pointer]
+    - generic [ref=e504]:
+      - generic [ref=e505]:
+        - generic [ref=e506]: 底图要素
+        - generic [ref=e507]:
+          - generic [ref=e508] [cursor=pointer]:
+            - checkbox "山脉 山脉" [ref=e509]
+            - img "山脉"
+            - generic [ref=e510]: 山脉
+          - generic [ref=e511] [cursor=pointer]:
+            - checkbox "省区 省区" [ref=e512]
+            - img "省区"
+            - generic [ref=e513]: 省区
+          - generic [ref=e514] [cursor=pointer]:
+            - checkbox "经纬网 经纬网" [ref=e515]
+            - img "经纬网"
+            - generic [ref=e516]: 经纬网
+      - generic [ref=e517]:
+        - generic [ref=e518]: 练习辅助
+        - generic [ref=e519] [cursor=pointer]:
+          - checkbox "目标提示" [ref=e520]
+          - generic [ref=e521]: 目标提示
