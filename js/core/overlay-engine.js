@@ -226,11 +226,6 @@ function createOverlayEngine(config) {
             x: 0, y: 0, width: 100, height: 100, opacity: 0.8, scale: 1.0,
             warp: createDefaultLayerWarp()
         },
-        adminCapital: {
-            src: config.adminCapitalSrc || 'images/行政区省会.png',
-            x: 0, y: 0, width: 100, height: 100, opacity: 0.8, scale: 1.0,
-            warp: createDefaultLayerWarp()
-        }
     };
 
     function loadOverlays(externalData) {

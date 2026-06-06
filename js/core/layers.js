@@ -46,7 +46,6 @@ function createLayerManager(mapEngine, overlayEngine) {
         editor: false,
         overlayMountain: false,
         overlayRegion: false,
-        adminCapital: false,
         admin: false,
         grid: false,
         mountain: false
@@ -93,26 +92,9 @@ function createLayerManager(mapEngine, overlayEngine) {
 
         layerStates[layerName] = newState;
 
-        // 底图要素与特殊要素互斥
-        if (['admin', 'grid', 'mountain'].includes(layerName) && newState && layerStates.adminCapital) {
-            toggle('adminCapital', false);
-        }
-        if (layerName === 'adminCapital' && newState) {
-            ['mountain', 'admin', 'grid'].forEach(baseLayer => {
-                if (layerStates[baseLayer]) {
-                    toggle(baseLayer, false);
-                }
-            });
-        }
-
         // 如果切换的是底图开关组，更新底图
         if (['admin', 'grid', 'mountain'].includes(layerName)) {
             updateBaseImage();
-        }
-
-        // 行政区省会叠加图控制
-        if (layerName === 'adminCapital' && overlayEngine) {
-            overlayEngine.setVisible('adminCapital', newState);
         }
 
         // 应用到 SVG 分组

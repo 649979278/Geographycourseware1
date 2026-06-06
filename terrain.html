@@ -440,7 +440,6 @@
                 baseHeight: 2180,
                 mountainSrc: 'images/中国的山脉.jpg',
                 regionSrc: 'images/中国地形图.jpg',
-                adminCapitalSrc: 'images/行政区省会.png',
                 onChange: saveOverlayCalibrationToStorage
             });
             loadOverlayCalibration();
@@ -1003,7 +1002,7 @@
                 layerToggleMountains.style.display = 'none';
                 layerToggleRegions.style.display = '';
             }
-            state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false, adminCapital: false });
+            state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false });
 
             // 重置叠加图片开关和可见性
             const overlayMountainToggle = document.querySelector('.layer-toggle[data-layer="overlayMountain"] input');
@@ -1015,7 +1014,6 @@
             state.overlayEngine.setVisible('mountainBlank', false);
             state.overlayEngine.setVisible('terrainRegion', false);
             state.overlayEngine.setVisible('adminOutline', false);
-            state.overlayEngine.setVisible('adminCapital', false);
 
             // 重置状态
             state.placedIds.clear();
@@ -3205,16 +3203,6 @@
                         <input type="checkbox">
                         <img src="images/4、经纬网+底图.png" alt="经纬网">
                         <span class="item-label">经纬网</span>
-                    </label>
-                </div>
-            </div>
-            <div class="layer-group">
-                <div class="layer-group-title">特殊要素</div>
-                <div class="layer-thumb-grid">
-                    <label class="layer-drawer-item layer-thumb" data-layer="adminCapital">
-                        <input type="checkbox">
-                        <img src="images/行政区省会.png" alt="行政区省会">
-                        <span class="item-label">行政区省会</span>
                     </label>
                 </div>
             </div>
