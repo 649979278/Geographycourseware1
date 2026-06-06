@@ -73,12 +73,12 @@
         <!-- PK 模式信息区 -->
         <div class="pk-info" id="pkInfo" style="display:none;align-items:center;gap:12px;margin-left:12px;">
             <div class="pk-player" id="pkP1" style="padding:6px 14px;background:#e8f5e9;border-radius:8px;border:2px solid transparent;transition:border-color 0.3s ease;">
-                <span style="font-size:12px;color:#666;">玩家1</span>
+                <span id="pkInfoName1" style="font-size:12px;color:#666;">玩家1</span>
                 <span id="pkScore1" style="font-size:18px;font-weight:700;color:#2c5f2d;margin-left:8px;">0</span>
             </div>
             <span style="font-size:14px;font-weight:700;color:#999;">VS</span>
             <div class="pk-player" id="pkP2" style="padding:6px 14px;background:#f5f5f5;border-radius:8px;border:2px solid transparent;transition:border-color 0.3s ease;">
-                <span style="font-size:12px;color:#666;">玩家2</span>
+                <span id="pkInfoName2" style="font-size:12px;color:#666;">玩家2</span>
                 <span id="pkScore2" style="font-size:18px;font-weight:700;color:#333;margin-left:8px;">0</span>
             </div>
             <div style="font-size:13px;color:#666;">⏱️ <span id="pkTurnTimer" style="font-weight:700;color:#ff9800;">20</span>秒</div>
@@ -99,7 +99,7 @@
                 <div class="dual-panel left-panel">
                 <aside class="sidebar" id="sidebar1">
                     <div class="sidebar-header">
-                        <span>玩家1</span>
+                        <span id="sidebarName1">玩家1</span>
                         <span class="sidebar-count"><span id="remainCount1">0</span> / <span id="totalCount1">0</span></span>
                     </div>
                     <div class="label-list" id="labelList1"></div>
@@ -133,7 +133,7 @@
                 </div>
                 <aside class="sidebar" id="sidebar2">
                     <div class="sidebar-header">
-                        <span>玩家2</span>
+                        <span id="sidebarName2">玩家2</span>
                         <span class="sidebar-count"><span id="remainCount2">0</span> / <span id="totalCount2">0</span></span>
                     </div>
                     <div class="label-list" id="labelList2"></div>
@@ -994,15 +994,17 @@
 
         function enterPkMode() {
             state.pk.active = true;
+            state.challenge.active = false;
             document.getElementById('pkInfo').style.display = 'none';
             els.scoreDisplay.parentElement.style.display = 'none';
-            els.timerDisplay.parentElement.style.display = 'none';
+            els.timerDisplay.parentElement.style.display = '';
             els.hintBtn.style.display = 'none';
             const levelName = els.levelName.textContent;
             document.getElementById('startTitle').textContent = '双人PK - ' + levelName;
             document.getElementById('startDesc').textContent = '两位玩家同时答题，先完成者获胜！';
             document.getElementById('nameInputSingle').style.display = 'none';
             document.getElementById('nameInputPk').style.display = 'flex';
+            document.getElementById('challengeInfo').style.display = 'none';
             document.querySelectorAll('.layer-toggle[data-layer="overlayMountain"], .layer-toggle[data-layer="overlayRegion"], .layer-toggle[data-layer="overlayAdmin"], .layer-toggle[data-layer="dropZones"]').forEach(el => {
                 el.style.display = 'none';
             });
@@ -1032,6 +1034,7 @@
 
         function enterChallengeMode() {
             state.mode = 'challenge';
+            state.pk.active = false;
             document.getElementById('pkInfo').style.display = 'none';
             els.scoreDisplay.parentElement.style.display = '';
             els.timerDisplay.parentElement.style.display = '';
@@ -1137,6 +1140,8 @@
         function resetPkState() {
             state.pk.timer = 0;
             state.pk.timerInterval = null;
+            state.pk.totalTimer = 0;
+            state.pk.totalInterval = null;
             state.pk.forceEndTimer = null;
             state.pk.forceEndCountdown = 10;
             state.pk.player1 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null };
@@ -1232,6 +1237,16 @@
                     els.resultModal.classList.remove('active');
                 }
             });
+
+            // 对比弹窗点击外部关闭
+            const comparisonModal = document.getElementById('comparisonModal');
+            if (comparisonModal) {
+                comparisonModal.addEventListener('click', (e) => {
+                    if (e.target === comparisonModal) {
+                        comparisonModal.classList.remove('active');
+                    }
+                });
+            }
         }
 
         function bindLevelSelect() {
@@ -1357,7 +1372,11 @@
 
         function updateUI() {
             els.scoreDisplay.textContent = state.score;
-            els.timerDisplay.textContent = formatTime(state.timer);
+            if (state.pk.active) {
+                els.timerDisplay.textContent = formatTime(state.pk.totalTimer);
+            } else {
+                els.timerDisplay.textContent = formatTime(state.timer);
+            }
             if (state.mode === 'challenge' && state.challenge.active) {
                 els.hintCount.textContent = state.challenge.hintsAvailable;
             } else {
@@ -1657,6 +1676,14 @@
                 }
                 state.pk.player1.name = p1Name;
                 state.pk.player2.name = p2Name;
+                const sbName1 = document.getElementById('sidebarName1');
+                const sbName2 = document.getElementById('sidebarName2');
+                if (sbName1) sbName1.textContent = p1Name;
+                if (sbName2) sbName2.textContent = p2Name;
+                const pkInfoName1 = document.getElementById('pkInfoName1');
+                const pkInfoName2 = document.getElementById('pkInfoName2');
+                if (pkInfoName1) pkInfoName1.textContent = p1Name;
+                if (pkInfoName2) pkInfoName2.textContent = p2Name;
             } else {
                 const name = document.getElementById('playerNameSingle').value.trim();
                 if (!name) {
@@ -1678,6 +1705,8 @@
                 els.dualScreenWrapper.style.display = 'flex';
                 els.sidebar.style.display = 'none';
                 els.mapContainer.style.display = 'none';
+                if (els.labelList1) els.labelList1.style.pointerEvents = '';
+                if (els.labelList2) els.labelList2.style.pointerEvents = '';
                 renderDualGameData();
                 setupDualDragAndDrop();
                 startPkGame();
@@ -1760,6 +1789,7 @@
             state.pk.totalTimer = 0;
             state.pk.totalInterval = setInterval(() => {
                 state.pk.totalTimer++;
+                els.timerDisplay.textContent = formatTime(state.pk.totalTimer);
             }, 1000);
         }
 
@@ -1801,14 +1831,19 @@
                 state.challenge.active = false;
                 enterChallengeMode();
             } else if (state.pk.active) {
-                // PK 模式重开
-                document.querySelectorAll('.player-result-overlay').forEach(el => el.classList.remove('active'));
+                // PK 模式重开：清除动态结算遮罩、隐藏弹窗、回到 PK 开始界面
+                document.querySelectorAll('.player-result-overlay').forEach(el => el.remove());
                 document.getElementById('comparisonModal')?.classList.remove('active');
                 document.getElementById('pkForceEndBanner')?.classList.remove('active');
                 els.dualScreenWrapper.style.display = 'none';
                 document.body.classList.remove('dual-screen-mode');
+                els.mapContainer.style.display = '';
+                els.sidebar.style.display = 'none';
                 const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
                 setupLevel(levelToRestore);
+                els.startOverlay.style.display = '';
+                enterPkMode();
+                updateUI();
             } else {
                 const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
                 setupLevel(levelToRestore);
@@ -1830,6 +1865,11 @@
             // 禁用答案标记交互，禁止提示按钮
             document.querySelectorAll('.answer-item').forEach(el => { el.style.pointerEvents = 'none'; });
             if (els.hintBtn) els.hintBtn.disabled = true;
+            // PK 模式下禁用两侧拖拽面板
+            if (state.pk.active) {
+                if (els.labelList1) els.labelList1.style.pointerEvents = 'none';
+                if (els.labelList2) els.labelList2.style.pointerEvents = 'none';
+            }
         }
 
         function endGame() {
@@ -2535,6 +2575,12 @@
             if (els.totalCount1) els.totalCount1.textContent = state.items.length;
             if (els.remainCount2) els.remainCount2.textContent = state.items.length - state.pk.player2.placedIds.size;
             if (els.totalCount2) els.totalCount2.textContent = state.items.length;
+            // 更新双方平均完成进度
+            if (state.items.length) {
+                const totalPlaced = state.pk.player1.placedIds.size + state.pk.player2.placedIds.size;
+                const pct = (totalPlaced / (state.items.length * 2)) * 100;
+                els.progressBar.style.width = pct + '%';
+            }
         }
 
         function renderDualGameData() {

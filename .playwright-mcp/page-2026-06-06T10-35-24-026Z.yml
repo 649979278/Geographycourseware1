@@ -1,0 +1,139 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "← 返回首页" [ref=e3] [cursor=pointer]:
+      - /url: index.html
+    - generic [ref=e4]: 中国的地形
+    - button "🗺️ 图层" [ref=e5] [cursor=pointer]
+    - generic [ref=e6] [cursor=pointer]:
+      - checkbox "山脉标记" [ref=e7]
+      - text: 山脉标记
+    - generic [ref=e78] [cursor=pointer]:
+      - checkbox "地形区标注" [ref=e79]
+      - text: 地形区标注
+    - generic [ref=e16]:
+      - button "单人练习" [ref=e17] [cursor=pointer]
+      - button "双人PK" [ref=e18] [cursor=pointer]
+      - button "闯关模式" [ref=e19] [cursor=pointer]
+      - button "坐标采集" [ref=e20] [cursor=pointer]
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]: 关卡：
+      - generic [ref=e24]: 山脉标注
+    - generic [ref=e25]:
+      - generic [ref=e26]: 时间：
+      - generic [ref=e27]: 00:46
+    - generic [ref=e32]: 进度：
+    - button "🔄 重开" [ref=e36] [cursor=pointer]
+  - generic [ref=e98]:
+    - generic [ref=e99]:
+      - complementary [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: 玩家1
+          - generic [ref=e103]: 4 / 4
+        - generic:
+          - generic: 秦岭
+          - generic: 阴山山脉
+          - generic: 横断山脉
+          - generic: 大巴山
+      - generic [ref=e109]:
+        - img "底图"
+        - img [ref=e110]
+    - generic [ref=e111]:
+      - generic [ref=e112]:
+        - img "底图"
+        - img [ref=e113]
+      - complementary [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: 玩家2
+          - generic [ref=e117]: 4 / 4
+        - generic:
+          - generic: 横断山脉
+          - generic: 大巴山
+          - generic: 秦岭
+          - generic: 阴山山脉
+  - generic:
+    - generic:
+      - generic: 挑战完成！
+      - generic:
+        - generic: ⭐
+        - generic: ⭐
+        - generic: ⭐
+      - generic:
+        - generic:
+          - generic: "0"
+          - generic: 得分
+        - generic:
+          - generic: 00:00
+          - generic: 用时
+        - generic:
+          - generic: "0"
+          - generic: 正确数
+        - generic:
+          - generic: "0"
+          - generic: 错误数
+      - generic:
+        - button "返回首页"
+        - button "再玩一次"
+  - generic:
+    - generic:
+      - generic:
+        - button "知道了"
+  - generic [ref=e124]:
+    - generic [ref=e125]: 📊 对战结果对比
+    - table [ref=e126]:
+      - rowgroup [ref=e127]:
+        - row "项目 张三 李四" [ref=e128]:
+          - columnheader "项目" [ref=e129]
+          - columnheader "张三" [ref=e130]
+          - columnheader "李四" [ref=e131]
+      - rowgroup [ref=e132]:
+        - row "用时 00:45 01:12" [ref=e133]:
+          - cell "用时" [ref=e134]
+          - cell "00:45" [ref=e135]
+          - cell "01:12" [ref=e136]
+        - row "正确数 25 23" [ref=e137]:
+          - cell "正确数" [ref=e138]
+          - cell "25" [ref=e139]
+          - cell "23" [ref=e140]
+        - row "错误数 2 4" [ref=e141]:
+          - cell "错误数" [ref=e142]
+          - cell "2" [ref=e143]
+          - cell "4" [ref=e144]
+        - row "总得分 240 210" [ref=e145]:
+          - cell "总得分" [ref=e146]
+          - cell "240" [ref=e147]
+          - cell "210" [ref=e148]
+    - generic [ref=e149]:
+      - button "返回首页" [ref=e150] [cursor=pointer]
+      - button "再玩一次" [ref=e151] [cursor=pointer]
+  - generic [ref=e56]:
+    - generic [ref=e57]:
+      - heading "🗺️ 图层开关" [level=3] [ref=e58]
+      - button "×" [ref=e59] [cursor=pointer]
+    - generic [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]: 底图要素
+        - generic [ref=e63]:
+          - generic [ref=e64] [cursor=pointer]:
+            - checkbox "山脉 山脉" [ref=e65]
+            - img "山脉"
+            - generic [ref=e66]: 山脉
+          - generic [ref=e67] [cursor=pointer]:
+            - checkbox "省区 省区" [ref=e68]
+            - img "省区"
+            - generic [ref=e69]: 省区
+          - generic [ref=e70] [cursor=pointer]:
+            - checkbox "经纬网 经纬网" [ref=e71]
+            - img "经纬网"
+            - generic [ref=e72]: 经纬网
+      - generic [ref=e73]:
+        - generic [ref=e74]: 练习辅助
+        - generic [ref=e75] [cursor=pointer]:
+          - checkbox "目标提示" [ref=e76]
+          - generic [ref=e77]: 目标提示
+        - generic [ref=e83] [cursor=pointer]:
+          - checkbox "山脉标记" [ref=e84]
+          - generic [ref=e85]: 山脉标记
+        - generic [ref=e86] [cursor=pointer]:
+          - checkbox "地形区标注" [ref=e87]
+          - generic [ref=e88]: 地形区标注
