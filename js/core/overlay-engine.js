@@ -217,12 +217,17 @@ function createOverlayEngine(config) {
 
     const defaultData = {
         mountainBlank: {
-            src: config.mountainSrc || '地形区图片/中国的山脉.jpg',
+            src: config.mountainSrc || 'images/中国的山脉.jpg',
             x: 0, y: 0, width: 100, height: 100, opacity: 0.8, scale: 1.0,
             warp: createDefaultLayerWarp()
         },
         terrainRegion: {
-            src: config.regionSrc || '地形区图片/中国地形图.jpg',
+            src: config.regionSrc || 'images/中国地形图.jpg',
+            x: 0, y: 0, width: 100, height: 100, opacity: 0.8, scale: 1.0,
+            warp: createDefaultLayerWarp()
+        },
+        adminCapital: {
+            src: config.adminCapitalSrc || 'images/行政区省会.png',
             x: 0, y: 0, width: 100, height: 100, opacity: 0.8, scale: 1.0,
             warp: createDefaultLayerWarp()
         }

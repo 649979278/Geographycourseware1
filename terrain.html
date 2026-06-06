@@ -98,7 +98,7 @@
 
         <!-- 地图容器 -->
         <div class="map-container" id="mapContainer">
-            <img class="base-map-img" id="baseMapImg" src="地形区图片/第二批图片/1-底图.png" alt="底图">
+            <img class="base-map-img" id="baseMapImg" src="C:/Users/64997/Desktop/地理课件/ppt_images_v3/1、底图.png" alt="底图">
             <div class="overlay-container" id="overlayContainer"></div>
             <div class="handle-container" id="handleContainer"></div>
             <svg class="map-svg" id="mapSvg"></svg>
@@ -432,19 +432,22 @@
 
             // 初始化地图引擎
             state.mapEngine = initSvgMap('#mapSvg');
-            state.layerManager = createLayerManager(state.mapEngine);
-            state.layerManager.bindControls();
 
             // 初始化叠加图片引擎
             state.overlayEngine = createOverlayEngine({
                 container: els.overlayContainer,
                 baseWidth: 2981,
                 baseHeight: 2180,
-                mountainSrc: '地形区图片/中国的山脉.jpg',
-                regionSrc: '地形区图片/中国地形图.jpg',
+                mountainSrc: 'images/中国的山脉.jpg',
+                regionSrc: 'images/中国地形图.jpg',
+                adminCapitalSrc: 'images/行政区省会.png',
                 onChange: saveOverlayCalibrationToStorage
             });
             loadOverlayCalibration();
+
+            // 初始化图层管理器（依赖 overlayEngine，需在之后创建）
+            state.layerManager = createLayerManager(state.mapEngine, state.overlayEngine);
+            state.layerManager.bindControls();
 
             // 同步 overlay 容器尺寸并监听 resize
             // 使用 requestAnimationFrame 确保 SVG 布局完成后再计算
@@ -960,6 +963,13 @@
             document.getElementById('descCloseBtn').addEventListener('click', () => {
                 document.getElementById('descModal').classList.remove('active');
             });
+
+            // 结算弹窗点击外部关闭
+            els.resultModal.addEventListener('click', (e) => {
+                if (e.target === els.resultModal) {
+                    els.resultModal.classList.remove('active');
+                }
+            });
         }
 
         function bindLevelSelect() {
@@ -993,7 +1003,7 @@
                 layerToggleMountains.style.display = 'none';
                 layerToggleRegions.style.display = '';
             }
-            state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false });
+            state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false, adminCapital: false });
 
             // 重置叠加图片开关和可见性
             const overlayMountainToggle = document.querySelector('.layer-toggle[data-layer="overlayMountain"] input');
@@ -1005,6 +1015,7 @@
             state.overlayEngine.setVisible('mountainBlank', false);
             state.overlayEngine.setVisible('terrainRegion', false);
             state.overlayEngine.setVisible('adminOutline', false);
+            state.overlayEngine.setVisible('adminCapital', false);
 
             // 重置状态
             state.placedIds.clear();
@@ -1530,6 +1541,9 @@
                 state.dragEl = null;
             }
             state.draggedItem = null;
+            // 禁用答案标记交互，禁止提示按钮
+            document.querySelectorAll('.answer-item').forEach(el => { el.style.pointerEvents = 'none'; });
+            if (els.hintBtn) els.hintBtn.disabled = true;
         }
 
         function endGame() {
@@ -3175,62 +3189,34 @@
         </div>
         <div class="layer-drawer-body">
             <div class="layer-group">
-                <div class="layer-group-title">基础要素</div>
-                <label class="layer-drawer-item" data-layer="rivers">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        中国主要河流
-                        <div class="item-hint">底图 + 河流</div>
-                    </span>
-                </label>
-                <label class="layer-drawer-item" data-layer="admin">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        中国行政区界线
-                        <div class="item-hint">底图 + 行政区</div>
-                    </span>
-                </label>
-                <label class="layer-drawer-item" data-layer="grid">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        经纬网
-                        <div class="item-hint">底图 + 经纬网</div>
-                    </span>
-                </label>
+                <div class="layer-group-title">底图要素</div>
+                <div class="layer-thumb-grid">
+                    <label class="layer-drawer-item layer-thumb" data-layer="mountain">
+                        <input type="checkbox">
+                        <img src="images/2、山脉+底图.png" alt="山脉">
+                        <span class="item-label">山脉</span>
+                    </label>
+                    <label class="layer-drawer-item layer-thumb" data-layer="admin">
+                        <input type="checkbox">
+                        <img src="images/3、省区+底图.png" alt="省区">
+                        <span class="item-label">省区</span>
+                    </label>
+                    <label class="layer-drawer-item layer-thumb" data-layer="grid">
+                        <input type="checkbox">
+                        <img src="images/4、经纬网+底图.png" alt="经纬网">
+                        <span class="item-label">经纬网</span>
+                    </label>
+                </div>
             </div>
             <div class="layer-group">
-                <div class="layer-group-title">叠加要素</div>
-                <label class="layer-drawer-item" data-layer="mountain">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        中国山脉图
-                        <div class="item-hint">底图 + 山脉（若基础要素有开则自动切换为全部要素）</div>
-                    </span>
-                </label>
-            </div>
-            <div class="layer-group">
-                <div class="layer-group-title">特殊组合</div>
-                <label class="layer-drawer-item" data-layer="special8">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        经纬网 + 行政区 + 河流 + 底图
-                        <div class="item-hint">图8：1+2+4+6</div>
-                    </span>
-                </label>
-                <label class="layer-drawer-item" data-layer="special11">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        全要素叠加
-                        <div class="item-hint">图11：全部要素</div>
-                    </span>
-                </label>
-                <label class="layer-drawer-item" data-layer="special12">
-                    <input type="checkbox">
-                    <span class="item-label">
-                        行政区 + 省会 + 河流
-                        <div class="item-hint">图12：独立完整底图</div>
-                    </span>
-                </label>
+                <div class="layer-group-title">特殊要素</div>
+                <div class="layer-thumb-grid">
+                    <label class="layer-drawer-item layer-thumb" data-layer="adminCapital">
+                        <input type="checkbox">
+                        <img src="images/行政区省会.png" alt="行政区省会">
+                        <span class="item-label">行政区省会</span>
+                    </label>
+                </div>
             </div>
             <div class="layer-group">
                 <div class="layer-group-title">练习辅助</div>

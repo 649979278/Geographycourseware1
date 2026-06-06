@@ -1,0 +1,3 @@
+[      60ms] [ERROR] Not allowed to load local resource: file:///C:/Users/64997/Desktop/%E5%9C%B0%E7%90%86%E8%AF%BE%E4%BB%B6/ppt_images_v3/1%E3%80%81%E5%BA%95%E5%9B%BE.png @ http://localhost:8080/terrain.html:323
+[     230ms] [LOG] [setupLevel] levelId= mountains items.length= 25 @ http://localhost:8080/terrain.html:991
+[     269ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0

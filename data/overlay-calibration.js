@@ -1,6 +1,6 @@
 window.OVERLAY_CALIBRATION = {
   "mountainBlank": {
-    "src": "地形区图片/中国的山脉.jpg",
+    "src": "images/中国的山脉.jpg",
     "x": -0.5,
     "y": -0.7,
     "width": 100,
@@ -43,7 +43,7 @@ window.OVERLAY_CALIBRATION = {
     }
   },
   "terrainRegion": {
-    "src": "地形区图片/中国地形图.jpg",
+    "src": "images/中国地形图.jpg",
     "x": 0,
     "y": -1.8,
     "width": 100,
@@ -86,7 +86,7 @@ window.OVERLAY_CALIBRATION = {
     }
   },
   "adminOutline": {
-    "src": "地形区图片/完整中国政区轮廓.jpg",
+    "src": "images/完整中国政区轮廓.jpg",
     "x": 2.7683595390909175,
     "y": -1.6997033860236384,
     "width": 108.7,

@@ -67,8 +67,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2753,
       "y": 420
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "daxinganling",
@@ -137,8 +136,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2307,
       "y": 143
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "xiaoxinganling",
@@ -183,8 +181,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2426,
       "y": 193
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "yanshan",
@@ -213,8 +210,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2224,
       "y": 784
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "altaishan",
@@ -267,8 +263,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 844,
       "y": 248
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "tianshan",
@@ -305,8 +300,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 535,
       "y": 605
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "item_22826_34892_23665_33033",
@@ -343,8 +337,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2060,
       "y": 849
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "item_38452_23665_23665_33033",
@@ -385,8 +378,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1683,
       "y": 782
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "helanshan",
@@ -415,8 +407,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1676,
       "y": 880
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "item_31041_36830_23665_33033",
@@ -469,8 +460,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1136,
       "y": 854
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "arjinshan",
@@ -519,8 +509,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 661,
       "y": 905
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "item_26118_20177_23665_33033",
@@ -609,8 +598,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 173,
       "y": 808
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "gangdisi",
@@ -659,8 +647,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 312,
       "y": 1144
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "item_21916_29595_25289_38597_23665",
@@ -777,8 +764,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 115,
       "y": 1058
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "hengduan",
@@ -827,8 +813,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1205,
       "y": 1378
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "tanggula",
@@ -873,8 +858,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 723,
       "y": 1174
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "bayankela",
@@ -931,8 +915,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1081,
       "y": 1124
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "dabashan",
@@ -981,8 +964,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1525,
       "y": 1270
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "qinling",
@@ -1047,8 +1029,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1426,
       "y": 1151
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "wushan",
@@ -1077,8 +1058,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1937,
       "y": 1331
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "xuefengshan",
@@ -1115,8 +1095,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1907,
       "y": 1490
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "nanling",
@@ -1157,8 +1136,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 1906,
       "y": 1710
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "wuyishan",
@@ -1203,8 +1181,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2312,
       "y": 1467
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "dabieshan",
@@ -1241,8 +1218,7 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2051,
       "y": 1255
-    },
-    "difficulty": 1
+    }
   },
   {
     "id": "taiwan",
@@ -1271,7 +1247,6 @@ window.GEO_DATA.lines = [
     "labelPosition": {
       "x": 2547,
       "y": 1653
-    },
-    "difficulty": 1
+    }
   }
 ];

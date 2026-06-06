@@ -4,53 +4,31 @@
  */
 
 /**
- * 第二批图片目录前缀
+ * 组合底图目录前缀
  */
-const BATCH2_BASE = '地形区图片/第二批图片/';
+const IMAGE_BASE = 'images/';
 
 /**
  * 根据开关状态解析应展示的底图路径
+ * 三要素组合：mountain(山脉)=bit2, admin(省区)=bit1, grid(经纬网)=bit0
  * @param {Object} states - 开关状态对象
  * @returns {string} 底图相对路径
  */
 function resolveBaseImage(states) {
-    // 优先级：12 > 11 > 8 > 基础组合/山脉
-    if (states.special12) {
-        return BATCH2_BASE + '12-中国行政区界线+省会+主要河流.png';
-    }
-    if (states.special11) {
-        return BATCH2_BASE + '11-全部要素叠加.png';
-    }
-    if (states.special8) {
-        return BATCH2_BASE + '8-底图叠加图2+4+6.png';
-    }
-
-    // 基础要素编码: 河流=bit2, 行政区=bit1, 经纬网=bit0
-    const code = (states.rivers ? 4 : 0) + (states.admin ? 2 : 0) + (states.grid ? 1 : 0);
+    const code = (states.mountain ? 4 : 0) + (states.admin ? 2 : 0) + (states.grid ? 1 : 0);
 
     const baseMap = {
-        0: '1-底图.png',
-        4: '3-底图叠加中国主要河流.png',
-        2: '5-底图叠加中国行政区界线.png',
-        1: '7-底图叠加经纬网.png',
-        6: '8-底图叠加图2+4+6.png',
-        5: '8-底图叠加图2+4+6.png',
-        3: '8-底图叠加图2+4+6.png',
-        7: '8-底图叠加图2+4+6.png'
+        0: '1、底图.png',
+        1: '4、经纬网+底图.png',
+        2: '3、省区+底图.png',
+        3: '6、经纬网+省区+底图.png',
+        4: '2、山脉+底图.png',
+        5: '5、经纬网+山脉+底图.png',
+        6: '7、经纬网+山脉+省区+底图.png',
+        7: '7、经纬网+山脉+省区+底图.png'
     };
 
-    let base = baseMap[code];
-
-    // 山脉智能合并
-    if (states.mountain) {
-        if (code === 0) {
-            base = '10-底图叠加中国山脉图.png';
-        } else {
-            base = '11-全部要素叠加.png';
-        }
-    }
-
-    return BATCH2_BASE + base;
+    return IMAGE_BASE + baseMap[code];
 }
 
 /**
@@ -58,7 +36,7 @@ function resolveBaseImage(states) {
  * @param {Object} mapEngine - svg-map.js 返回的地图引擎实例
  * @returns {Object} 图层管理器
  */
-function createLayerManager(mapEngine) {
+function createLayerManager(mapEngine, overlayEngine) {
     const layerStates = {
         base: true,
         mountains: false,
@@ -68,14 +46,10 @@ function createLayerManager(mapEngine) {
         editor: false,
         overlayMountain: false,
         overlayRegion: false,
-        // 新开关状态
-        rivers: false,
+        adminCapital: false,
         admin: false,
         grid: false,
-        mountain: false,
-        special8: false,
-        special11: false,
-        special12: false
+        mountain: false
     };
 
     // 底图 img 元素缓存
@@ -98,8 +72,6 @@ function createLayerManager(mapEngine) {
         const img = getBaseMapImg();
         if (!img) return;
         const newSrc = resolveBaseImage(layerStates);
-        // img.src 是绝对路径，newSrc 是相对路径，直接比较会永远不相等
-        // 使用 getAttribute('src') 获取原始值，或比较路径末尾
         const currentSrc = img.getAttribute('src') || '';
         if (currentSrc !== newSrc) {
             img.src = newSrc;
@@ -119,25 +91,16 @@ function createLayerManager(mapEngine) {
         }
         const newState = force !== undefined ? force : !layerStates[layerName];
 
-        // 特殊开关（8/11/12）开启时，禁止其他基础底图开关
-        const priorityKeys = ['special8', 'special11', 'special12'];
-        const baseImageKeys = ['rivers', 'admin', 'grid', 'mountain'];
-        const anyPriorityOn = priorityKeys.some(k => layerStates[k]);
-        if (baseImageKeys.includes(layerName) && anyPriorityOn && newState) {
-            return layerStates[layerName];
-        }
-
-        // 基础开关开启时，禁止特殊开关（8/11）开启（12除外，它有自己的独立逻辑）
-        const anyBaseOn = baseImageKeys.some(k => layerStates[k]);
-        if (['special8', 'special11'].includes(layerName) && anyBaseOn && newState) {
-            return layerStates[layerName];
-        }
-
         layerStates[layerName] = newState;
 
-        // 如果切换的是新底图开关组，更新底图
-        if ([...baseImageKeys, 'special8', 'special11', 'special12'].includes(layerName)) {
+        // 如果切换的是底图开关组，更新底图
+        if (['admin', 'grid', 'mountain'].includes(layerName)) {
             updateBaseImage();
+        }
+
+        // 行政区省会叠加图控制
+        if (layerName === 'adminCapital' && overlayEngine) {
+            overlayEngine.setVisible('adminCapital', newState);
         }
 
         // 应用到 SVG 分组
@@ -145,8 +108,7 @@ function createLayerManager(mapEngine) {
         if (group) {
             group.style.display = newState ? '' : 'none';
 
-            // 对数据图层，同时控制所有直接子元素的显示状态，
-            // 确保图层开关能真正显示/隐藏所有内容
+            // 对数据图层，同时控制所有直接子元素的显示状态
             if (['mountains', 'lines', 'regions', 'dropZones'].includes(layerName)) {
                 Array.from(group.children).forEach(child => {
                     child.style.display = newState ? '' : 'none';
@@ -225,29 +187,6 @@ function createLayerManager(mapEngine) {
         const drawerItem = document.querySelector(`.layer-drawer [data-layer="${layerName}"]`);
         if (drawerCheckbox) drawerCheckbox.checked = state;
         if (drawerItem) drawerItem.classList.toggle('active', state);
-
-        // 当特殊开关（8/11/12）开启时，将基础要素开关项标记为禁用样式
-        const isPriorityOn = ['special8', 'special11', 'special12'].some(k => layerStates[k]);
-        const baseKeys = ['rivers', 'admin', 'grid', 'mountain'];
-        baseKeys.forEach(key => {
-            const item = document.querySelector(`.layer-drawer [data-layer="${key}"]`);
-            if (item) {
-                item.classList.toggle('disabled', isPriorityOn);
-                const cb = item.querySelector('input[type="checkbox"]');
-                if (cb) cb.disabled = isPriorityOn;
-            }
-        });
-
-        // 当基础开关开启时，将特殊开关（8/11）标记为禁用
-        const anyBaseOn = baseKeys.some(k => layerStates[k]);
-        ['special8', 'special11'].forEach(key => {
-            const item = document.querySelector(`.layer-drawer [data-layer="${key}"]`);
-            if (item) {
-                item.classList.toggle('disabled', anyBaseOn);
-                const cb = item.querySelector('input[type="checkbox"]');
-                if (cb) cb.disabled = anyBaseOn;
-            }
-        });
     }
 
     /**
@@ -263,7 +202,6 @@ function createLayerManager(mapEngine) {
             checkbox.checked = layerStates[layerName] !== false;
             el.classList.toggle('active', checkbox.checked);
 
-            // 使用 change 事件避免 label 的浏览器默认行为与 click 冲突导致双次切换
             checkbox.addEventListener('change', () => {
                 toggle(layerName, checkbox.checked);
             });
