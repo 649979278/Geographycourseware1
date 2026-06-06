@@ -7,7 +7,7 @@
 const MAP_CONFIG = {
     baseWidth: 2981,
     baseHeight: 2180,
-    baseImage: 'C:/Users/64997/Desktop/地理课件/ppt_images_v3/1、底图.png'
+    baseImage: 'images/1、底图.png'
 };
 
 /**
