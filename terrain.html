@@ -69,6 +69,9 @@
         <button class="btn btn-secondary" id="restartBtn" style="padding:6px 14px;font-size:13px;">
             🔄 重开
         </button>
+        <button class="btn btn-accent" id="viewResultBtn" style="padding:6px 14px;font-size:13px;display:none;">
+            📊 查看结果
+        </button>
 
         <!-- PK 模式信息区 -->
         <div class="pk-info" id="pkInfo" style="display:none;align-items:center;gap:12px;margin-left:12px;">
@@ -513,6 +516,7 @@
             hintCount: document.getElementById('hintCount'),
             startBtn: document.getElementById('startBtn'),
             restartBtn: document.getElementById('restartBtn'),
+            viewResultBtn: document.getElementById('viewResultBtn'),
             modeSwitch: document.getElementById('modeSwitch'),
             toolbar: document.getElementById('toolbar'),
             dualScreenWrapper: document.getElementById('dualScreenWrapper'),
@@ -1170,6 +1174,7 @@
         function bindGameControls() {
             els.startBtn.addEventListener('click', startGame);
             els.restartBtn.addEventListener('click', restartGame);
+            els.viewResultBtn.addEventListener('click', showLastResult);
             els.hintBtn.addEventListener('click', useHint);
 
             // 目标提示开关变化时更新提示按钮状态
@@ -1716,6 +1721,8 @@
                 state.playerName = name;
             }
             state.isPlaying = true;
+            state.lastResultType = null;
+            if (els.viewResultBtn) els.viewResultBtn.style.display = 'none';
             els.startOverlay.style.display = 'none';
 
             if (state.pk.active) {
@@ -1835,13 +1842,22 @@
             }, 1000);
         }
 
+        /**
+         * 强制结算 PK 游戏
+         * 为未完成的玩家也显示结算遮罩，与正常完成的玩家体验一致
+         */
         function forceEndPkGame() {
             if (!state.isPlaying) return;
+            // 为未完成的玩家显示结算遮罩
+            if (!state.pk.player1.finished) showPlayerResult(1);
+            if (!state.pk.player2.finished) showPlayerResult(2);
             stopGame();
             showComparison();
         }
 
         function restartGame() {
+            state.lastResultType = null;
+            if (els.viewResultBtn) els.viewResultBtn.style.display = 'none';
             stopGame();
             if (state.mode === 'challenge' && state.challenge.active) {
                 // 闯关模式重开 = 回到当前关开始界面
@@ -1933,6 +1949,9 @@
         }
 
         function showResult(stars) {
+            state.lastResultType = 'single';
+            if (els.viewResultBtn) els.viewResultBtn.style.display = '';
+
             // 恢复单人模式的结果布局
             document.getElementById('resultStars').style.display = '';
             document.querySelector('.result-stats').innerHTML = `
@@ -1984,6 +2003,9 @@
         }
 
         function showComparison() {
+            state.lastResultType = 'pk';
+            if (els.viewResultBtn) els.viewResultBtn.style.display = '';
+
             const p1 = state.pk.player1;
             const p2 = state.pk.player2;
             const p1Name = p1.name || '玩家1';
@@ -2010,6 +2032,9 @@
         }
 
         function showChallengeSuccess() {
+            state.lastResultType = 'challenge-success';
+            if (els.viewResultBtn) els.viewResultBtn.style.display = '';
+
             const name = state.challenge.playerName || '挑战者';
             document.getElementById('resultTitle').textContent = '🎉 ' + name + '，闯关成功！';
             document.getElementById('resultStars').style.display = 'none';
@@ -2030,6 +2055,9 @@
         }
 
         function showChallengeFail() {
+            state.lastResultType = 'challenge-fail';
+            if (els.viewResultBtn) els.viewResultBtn.style.display = '';
+
             const name = state.challenge.playerName || '挑战者';
             const level = state.challenge.currentLevelIdx + 1;
             const question = state.challenge.currentQuestionIdx + 1;
@@ -2051,6 +2079,24 @@
             document.getElementById('statTotalTime').textContent = formatTime(state.challenge.totalTimer);
 
             els.resultModal.classList.add('active');
+        }
+
+        /**
+         * 重新显示上一次结算弹窗
+         * 支持单人练习、双人PK和闯关模式
+         */
+        function showLastResult() {
+            if (!state.lastResultType) return;
+            if (state.lastResultType === 'single') {
+                const stars = calculateStars(state.timer, state.wrongCount);
+                showResult(stars);
+            } else if (state.lastResultType === 'pk') {
+                showComparison();
+            } else if (state.lastResultType === 'challenge-success') {
+                showChallengeSuccess();
+            } else if (state.lastResultType === 'challenge-fail') {
+                showChallengeFail();
+            }
         }
 
         // ============================================================
