@@ -434,8 +434,9 @@
             playerName: '',      // 单人模式挑战者姓名
             items: [],            // 当前关卡的数据项
             placedIds: new Set(), // 已放置的项
-            draggedItem: null,    // 当前拖拽的项
-            dragEl: null,         // 拖拽时的浮动元素
+            draggedItem: null,    // 当前拖拽的项（兼容单人和编辑器模式）
+            dragEl: null,         // 拖拽时的浮动元素（兼容单人和编辑器模式）
+            activeDrags: new Map(), // PK 模式下同时支持多指针拖拽，key 为 pointerId
             gameConfig: null,
             mapEngine: null,
             layerManager: null,
@@ -928,7 +929,19 @@
             const toggleBtn = document.getElementById('layerDrawerToggle');
             const closeBtn = document.getElementById('layerDrawerClose');
 
-            if (!drawer || !toggleBtn) return;
+            // 防御性检查：若 DOM 尚未就绪，延迟重试（解决部分浏览器解析时序差异导致的事件绑定失败）
+            if (!drawer || !toggleBtn) {
+                if (!window._bindLayerDrawerRetry) {
+                    window._bindLayerDrawerRetry = 0;
+                }
+                window._bindLayerDrawerRetry++;
+                if (window._bindLayerDrawerRetry <= 5) {
+                    setTimeout(bindLayerDrawer, 50 * window._bindLayerDrawerRetry);
+                }
+                return;
+            }
+            if (window._layerDrawerBound) return;
+            window._layerDrawerBound = true;
 
             function openDrawer() {
                 drawer.classList.add('open');
@@ -958,37 +971,43 @@
                 }
             });
 
-            // 绑定抽屉面板内各开关的 change 事件（DOM 在 script 后，init 时无法绑定）
+            // 使用事件委托绑定抽屉面板内开关的 change 事件，避免依赖初始化时 DOM 必须已存在
+            drawer.addEventListener('change', (e) => {
+                const item = e.target.closest('[data-layer]');
+                if (!item) return;
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (e.target !== checkbox) return;
+                const layerName = item.dataset.layer;
+                if (!layerName) return;
+
+                if (state.pk.active) {
+                    if (state.layerManager1) state.layerManager1.toggle(layerName, checkbox.checked);
+                    if (state.layerManager2) state.layerManager2.toggle(layerName, checkbox.checked);
+                    if (state.layerManager1 && (layerName === 'mountain' || layerName === 'admin' || layerName === 'grid')) {
+                        const newSrc = state.layerManager1.getBaseImagePath();
+                        const img1 = document.getElementById('baseMapImg1');
+                        const img2 = document.getElementById('baseMapImg2');
+                        if (img1) img1.src = newSrc;
+                        if (img2) img2.src = newSrc;
+                    }
+                } else if (state.layerManager) {
+                    state.layerManager.toggle(layerName, checkbox.checked);
+                }
+            });
+
+            // 初始化抽屉面板内各开关的显示状态
             drawer.querySelectorAll('[data-layer]').forEach(el => {
                 const layerName = el.dataset.layer;
                 const checkbox = el.querySelector('input[type="checkbox"]');
                 if (!checkbox) return;
-
-                // 同步当前状态
                 let currentState = false;
                 if (state.pk.active && state.layerManager1) {
                     currentState = state.layerManager1.getState(layerName);
                 } else if (state.layerManager) {
                     currentState = state.layerManager.getState(layerName);
                 }
-                checkbox.checked = currentState;
-                el.classList.toggle('active', currentState);
-
-                checkbox.addEventListener('change', () => {
-                    if (state.pk.active) {
-                        if (state.layerManager1) state.layerManager1.toggle(layerName, checkbox.checked);
-                        if (state.layerManager2) state.layerManager2.toggle(layerName, checkbox.checked);
-                        if (state.layerManager1 && (layerName === 'mountain' || layerName === 'admin' || layerName === 'grid')) {
-                            const newSrc = state.layerManager1.getBaseImagePath();
-                            const img1 = document.getElementById('baseMapImg1');
-                            const img2 = document.getElementById('baseMapImg2');
-                            if (img1) img1.src = newSrc;
-                            if (img2) img2.src = newSrc;
-                        }
-                    } else if (state.layerManager) {
-                        state.layerManager.toggle(layerName, checkbox.checked);
-                    }
-                });
+                checkbox.checked = !!currentState;
+                el.classList.toggle('active', !!currentState);
             });
         }
 
@@ -1857,11 +1876,25 @@
             clearInterval(state.pk.totalInterval);
             clearInterval(state.pk.forceEndTimer);
             clearInterval(state.challenge.totalInterval);
+
+            // 清理所有活跃拖拽（支持 PK 多指针同时拖拽）
+            state.activeDrags.forEach((dragInfo) => {
+                if (dragInfo.dragEl && dragInfo.dragEl.parentNode) {
+                    dragInfo.dragEl.remove();
+                }
+                if (dragInfo.label) {
+                    dragInfo.label.classList.remove('dragging');
+                }
+            });
+            state.activeDrags.clear();
+
+            // 兼容旧的全局拖拽状态
             if (state.dragEl) {
                 state.dragEl.remove();
                 state.dragEl = null;
             }
             state.draggedItem = null;
+
             // 禁用答案标记交互，禁止提示按钮
             document.querySelectorAll('.answer-item').forEach(el => { el.style.pointerEvents = 'none'; });
             if (els.hintBtn) els.hintBtn.disabled = true;
@@ -2348,7 +2381,6 @@
             if (player.finished) return;
             if (player.placedIds.has(itemId)) return;
 
-            state.draggedItem = item;
             label.classList.add('dragging');
 
             const rect = label.getBoundingClientRect();
@@ -2363,22 +2395,29 @@
             dragEl.style.pointerEvents = 'none';
             dragEl.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
             document.body.appendChild(dragEl);
-            state.dragEl = dragEl;
 
             const offsetX = e.clientX - rect.left;
             const offsetY = e.clientY - rect.top;
+            const pointerId = e.pointerId;
+
+            // 存储活跃拖拽状态，支持多指针同时拖拽
+            state.activeDrags.set(pointerId, {
+                item, dragEl, label, playerNum, offsetX, offsetY
+            });
 
             function onMove(ev) {
+                if (ev.pointerId !== pointerId) return;
                 dragEl.style.left = (ev.clientX - offsetX) + 'px';
                 dragEl.style.top = (ev.clientY - offsetY) + 'px';
             }
 
             function onUp(ev) {
+                if (ev.pointerId !== pointerId) return;
                 document.removeEventListener('pointermove', onMove);
                 document.removeEventListener('pointerup', onUp);
                 label.classList.remove('dragging');
                 dragEl.remove();
-                state.dragEl = null;
+                state.activeDrags.delete(pointerId);
 
                 handleDropDual(ev.clientX, ev.clientY, item, label, playerNum);
             }
@@ -3831,9 +3870,14 @@
         window._game = { state, els, setupLevel, startGame, restartGame, endGame, showDescription, loadEditorItemsToGame, refreshEditorVisuals, findEditorItemAt, deleteEditorItem, saveEditorItem, renderEditorList, syncEditorToSidebar, pushUndo, undo, refreshLinePreview };
 
         // 抽屉面板 DOM 在 script 标签之后，延迟绑定事件
-        setTimeout(() => {
-            bindLayerDrawer();
-        }, 0);
+        // 使用 DOMContentLoaded + setTimeout 双重保险，确保 DOM 就绪后再绑定
+        function initLayerDrawerBinding() {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindLayerDrawer, { once: true });
+            }
+            setTimeout(bindLayerDrawer, 0);
+        }
+        initLayerDrawerBinding();
     })();
     </script>
 
