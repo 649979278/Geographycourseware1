@@ -192,7 +192,7 @@
                     </div>
                 </div>
                 <div id="challengeInfo" style="display:none;margin:12px 0;font-size:14px;color:#666;">
-                    共 <strong id="challengeTotalLevels">0</strong> 关，答错一题即失败，闯过一关获得 1 次提示！
+                    共 <strong id="challengeTotalLevels">0</strong> 关，每关限时1分钟，超时即失败，闯过一关获得 1 次提示！
                 </div>
                 <div style="display:flex;gap:12px;">
                     <button class="btn btn-primary" id="startBtn" style="padding:12px 32px;font-size:16px;">开始挑战</button>
@@ -466,7 +466,9 @@
                     wrongCount: 0,
                     placedIds: new Set(),
                     finished: false,
-                    finishedAt: null
+                    finishedAt: null,
+                    consecutiveWrongCount: 0,
+                    cooldownEndTime: 0
                 },
                 player2: {
                     name: '',
@@ -475,7 +477,9 @@
                     wrongCount: 0,
                     placedIds: new Set(),
                     finished: false,
-                    finishedAt: null
+                    finishedAt: null,
+                    consecutiveWrongCount: 0,
+                    cooldownEndTime: 0
                 }
             },
             // 闯关模式
@@ -489,7 +493,12 @@
                 playerName: '',
                 totalScore: 0,
                 totalTimer: 0,
-                totalInterval: null
+                totalInterval: null,
+                totalCorrectCount: 0,
+                totalWrongCount: 0,
+                levelTimer: 0,
+                levelTimerInterval: null,
+                levelTimeLimit: 60
             }
         };
 
@@ -1167,8 +1176,8 @@
             state.pk.totalInterval = null;
             state.pk.forceEndTimer = null;
             state.pk.forceEndCountdown = 10;
-            state.pk.player1 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null };
-            state.pk.player2 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null };
+            state.pk.player1 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null, consecutiveWrongCount: 0, cooldownEndTime: 0 };
+            state.pk.player2 = { name: '', score: 0, correctCount: 0, wrongCount: 0, placedIds: new Set(), finished: false, finishedAt: null, consecutiveWrongCount: 0, cooldownEndTime: 0 };
         }
 
         function bindGameControls() {
@@ -1268,6 +1277,11 @@
                 comparisonModal.addEventListener('click', (e) => {
                     if (e.target === comparisonModal) {
                         comparisonModal.classList.remove('active');
+                        // 关闭对比弹窗后，显示双方个人结算遮罩，便于查看最终作答结果
+                        if (state.pk.active) {
+                            showPlayerResult(1, '挑战结束');
+                            showPlayerResult(2, '挑战结束');
+                        }
                     }
                 });
             }
@@ -1473,6 +1487,17 @@
                     allItems.push(copy);
                 });
 
+                // 按 id 去重：有 id 的保留第一个，无 id 的全部保留
+                const seenIds = new Set();
+                const uniqueItems = [];
+                allItems.forEach(item => {
+                    if (item.id && seenIds.has(item.id)) return;
+                    if (item.id) seenIds.add(item.id);
+                    uniqueItems.push(item);
+                });
+                allItems.length = 0;
+                uniqueItems.forEach(item => allItems.push(item));
+
                 if (allItems.length === 0) {
                     return { totalLevels: 0, levels: [] };
                 }
@@ -1677,6 +1702,8 @@
                 state.challenge.hintsAvailable = 0;
                 state.challenge.totalScore = 0;
                 state.challenge.totalTimer = 0;
+                state.challenge.totalCorrectCount = 0;
+                state.challenge.totalWrongCount = 0;
                 state.playerName = name;
 
                 // 启动总计时器
@@ -1757,6 +1784,7 @@
 
             // 清除上一关的计时器，避免多个计时器同时运行
             clearInterval(state.timerInterval);
+            clearInterval(state.challenge.levelTimerInterval);
 
             state.challenge.currentLevelIdx = levelIdx;
             state.challenge.currentQuestionIdx = 0;
@@ -1765,19 +1793,30 @@
             state.level = 'challenge';
             state.placedIds.clear();
             state.score = 0;
-            state.timer = 0;
+            state.timer = state.challenge.levelTimeLimit; // 每关从60秒开始倒计时
             state.hintsUsed = 0;
             state.correctCount = 0;
             state.wrongCount = 0;
+            state.challenge.levelTimer = state.challenge.levelTimeLimit;
 
             els.levelName.textContent = '第 ' + (levelIdx + 1) + ' / ' + state.challenge.totalLevels + ' 关';
             els.startOverlay.style.display = 'none';
             els.sidebar.style.display = '';
             state.isPlaying = true;
+            els.timerDisplay.textContent = formatTime(state.timer);
 
-            // 启动关卡计时器
+            // 启动闯关关卡倒计时（从60秒开始倒计时，到0时强制结算）
             state.timerInterval = setInterval(() => {
-                state.timer++;
+                state.timer--;
+                if (state.timer <= 0) {
+                    state.timer = 0;
+                    els.timerDisplay.textContent = formatTime(state.timer);
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                    showToast('时间到！闯关失败', 'error');
+                    endChallenge(false);
+                    return;
+                }
                 els.timerDisplay.textContent = formatTime(state.timer);
             }, 1000);
 
@@ -1880,6 +1919,8 @@
                 enterPkMode();
                 updateUI();
             } else {
+                // 清除可能残留的闯关结果遮罩
+                document.querySelectorAll('.challenge-result-overlay').forEach(el => el.remove());
                 const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
                 setupLevel(levelToRestore);
             }
@@ -1892,33 +1933,52 @@
             clearInterval(state.pk.totalInterval);
             clearInterval(state.pk.forceEndTimer);
             clearInterval(state.challenge.totalInterval);
+            clearInterval(state.challenge.levelTimerInterval);
 
             // 清理所有活跃拖拽（支持 PK 多指针同时拖拽）
             state.activeDrags.forEach((dragInfo) => {
-                if (dragInfo.dragEl && dragInfo.dragEl.parentNode) {
-                    dragInfo.dragEl.remove();
-                }
                 if (dragInfo.label) {
                     dragInfo.label.classList.remove('dragging');
+                    // 恢复被提升为 fixed 的原标签样式
+                    dragInfo.label.style.position = '';
+                    dragInfo.label.style.left = '';
+                    dragInfo.label.style.top = '';
+                    dragInfo.label.style.width = '';
+                    dragInfo.label.style.zIndex = '';
+                    dragInfo.label.style.transform = '';
+                    dragInfo.label.style.transition = '';
+                    dragInfo.label.style.pointerEvents = '';
+                    dragInfo.label.style.boxShadow = '';
                 }
             });
             state.activeDrags.clear();
 
-            // 兼容旧的全局拖拽状态
-            if (state.dragEl) {
-                state.dragEl.remove();
-                state.dragEl = null;
+            // 兼容单人模式的全局拖拽状态
+            if (state.draggedItem) {
+                const draggingLabel = document.querySelector('.drag-label.dragging');
+                if (draggingLabel) {
+                    draggingLabel.classList.remove('dragging');
+                    draggingLabel.style.position = '';
+                    draggingLabel.style.left = '';
+                    draggingLabel.style.top = '';
+                    draggingLabel.style.width = '';
+                    draggingLabel.style.zIndex = '';
+                    draggingLabel.style.transform = '';
+                    draggingLabel.style.transition = '';
+                    draggingLabel.style.pointerEvents = '';
+                    draggingLabel.style.boxShadow = '';
+                }
             }
+            state.dragEl = null;
             state.draggedItem = null;
 
             // 禁用答案标记交互，禁止提示按钮
             document.querySelectorAll('.answer-item').forEach(el => { el.style.pointerEvents = 'none'; });
             if (els.hintBtn) els.hintBtn.disabled = true;
-            // PK 模式下禁用两侧拖拽面板
-            if (state.pk.active) {
-                if (els.labelList1) els.labelList1.style.pointerEvents = 'none';
-                if (els.labelList2) els.labelList2.style.pointerEvents = 'none';
-            }
+            // 禁用所有模式的拖拽面板
+            if (els.labelList) els.labelList.style.pointerEvents = 'none';
+            if (els.labelList1) els.labelList1.style.pointerEvents = 'none';
+            if (els.labelList2) els.labelList2.style.pointerEvents = 'none';
         }
 
         function endGame() {
@@ -1931,14 +1991,50 @@
             }
         }
 
+        /**
+         * 结束闯关模式
+         * @param {boolean} success - true 为闯关成功，false 为失败
+         */
         function endChallenge(success) {
             stopGame();
             clearInterval(state.challenge.totalInterval);
+            state.challenge.active = false;
             if (success) {
                 showChallengeSuccess();
             } else {
                 showChallengeFail();
+                // 失败时显示地图结果遮罩，点击可关闭查看最终作答
+                showChallengeResultOverlay();
             }
+        }
+
+        /**
+         * 闯关模式失败时显示结果遮罩
+         * 点击遮罩可关闭，便于查看地图上的最终作答结果
+         */
+        function showChallengeResultOverlay() {
+            const mapContainer = els.mapContainer;
+            if (!mapContainer) return;
+            const existing = mapContainer.querySelector('.challenge-result-overlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'challenge-result-overlay';
+            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff;border-radius:12px;cursor:pointer;';
+
+            const name = state.challenge.playerName || '挑战者';
+            overlay.innerHTML = `
+                <div style="font-size:28px;font-weight:700;margin-bottom:12px;">⏰ 时间到！</div>
+                <div style="font-size:18px;margin-bottom:8px;">${name}，闯关失败</div>
+                <div style="font-size:14px;color:#ccc;">点击此处查看最终作答结果</div>
+            `;
+
+            overlay.addEventListener('click', () => {
+                overlay.remove();
+            });
+
+            mapContainer.style.position = 'relative';
+            mapContainer.appendChild(overlay);
         }
 
         function calculateStars(time, errors) {
@@ -1953,45 +2049,56 @@
             if (els.viewResultBtn) els.viewResultBtn.style.display = '';
 
             // 恢复单人模式的结果布局
-            document.getElementById('resultStars').style.display = '';
-            document.querySelector('.result-stats').innerHTML = `
+            const resultModal = els.resultModal;
+            resultModal.querySelector('#resultStars').style.display = '';
+            resultModal.querySelector('.result-stats').innerHTML = `
                 <div class="result-stat"><div class="stat-value" id="statScore">0</div><div class="stat-label">得分</div></div>
                 <div class="result-stat"><div class="stat-value" id="statTime">00:00</div><div class="stat-label">用时</div></div>
                 <div class="result-stat"><div class="stat-value" id="statCorrect">0</div><div class="stat-label">正确数</div></div>
                 <div class="result-stat"><div class="stat-value" id="statWrong">0</div><div class="stat-label">错误数</div></div>
             `;
 
-            document.getElementById('statScore').textContent = state.score;
-            document.getElementById('statTime').textContent = formatTime(state.timer);
-            document.getElementById('statCorrect').textContent = state.correctCount;
-            document.getElementById('statWrong').textContent = state.wrongCount;
+            resultModal.querySelector('#statScore').textContent = state.score;
+            resultModal.querySelector('#statTime').textContent = formatTime(state.timer);
+            resultModal.querySelector('#statCorrect').textContent = state.correctCount;
+            resultModal.querySelector('#statWrong').textContent = state.wrongCount;
 
-            const starEls = document.querySelectorAll('#resultStars .result-star');
+            const starEls = resultModal.querySelectorAll('#resultStars .result-star');
             starEls.forEach((el, i) => {
                 el.classList.toggle('earned', i < stars);
             });
 
             const name = state.playerName || '挑战者';
             const baseTitle = stars === 3 ? '太棒了！⭐⭐⭐' : stars === 2 ? '做得很好！⭐⭐' : '完成挑战！⭐';
-            document.getElementById('resultTitle').textContent = name + '，' + baseTitle;
+            resultModal.querySelector('#resultTitle').textContent = name + '，' + baseTitle;
 
-            els.resultModal.classList.add('active');
+            resultModal.classList.add('active');
         }
 
-        function showPlayerResult(playerNum) {
+        /**
+         * 显示PK玩家个人结算遮罩
+         * @param {number} playerNum - 玩家编号（1或2）
+         * @param {string} customTitle - 自定义标题，为空则使用默认
+         */
+        function showPlayerResult(playerNum, customTitle) {
             const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
             const mapContainer = playerNum === 1 ? els.mapContainer1 : els.mapContainer2;
             if (!mapContainer) return;
 
+            // 防止重复创建遮罩
+            const existing = mapContainer.querySelector('.player-result-overlay');
+            if (existing) existing.remove();
+
             const overlay = document.createElement('div');
             overlay.className = 'player-result-overlay';
-            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff;border-radius:12px;';
+            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff;border-radius:12px;';
 
             const name = player.name || ('玩家' + playerNum);
-            const time = formatTime(state.pk.totalTimer);
+            const time = formatTime(player.finishedAt ?? state.pk.totalTimer);
+            const title = customTitle || (player.finished ? '完成！' : '挑战结束');
 
             overlay.innerHTML = `
-                <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${name} 完成！</div>
+                <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${name} ${title}</div>
                 <div style="font-size:18px;margin-bottom:8px;">得分: <span style="color:#ffd700;font-weight:700;">${player.score}</span></div>
                 <div style="font-size:18px;margin-bottom:8px;">正确: ${player.correctCount}</div>
                 <div style="font-size:18px;margin-bottom:8px;">错误: ${player.wrongCount}</div>
@@ -2000,6 +2107,51 @@
 
             mapContainer.style.position = 'relative';
             mapContainer.appendChild(overlay);
+
+            // 点击遮罩自身关闭
+            overlay.addEventListener('click', () => {
+                overlay.remove();
+            });
+        }
+
+        /**
+         * 显示PK模式玩家冷却遮罩
+         * @param {number} playerNum - 玩家编号（1或2）
+         * @param {number} seconds - 冷却秒数
+         */
+        function showPkCooldownOverlay(playerNum, seconds) {
+            const mapContainer = playerNum === 1 ? els.mapContainer1 : els.mapContainer2;
+            const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
+            if (!mapContainer) return;
+
+            const existing = mapContainer.querySelector('.pk-cooldown-overlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'pk-cooldown-overlay';
+            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff;border-radius:12px;backdrop-filter:blur(2px);';
+
+            const name = player.name || ('玩家' + playerNum);
+            overlay.innerHTML = `
+                <div style="font-size:24px;font-weight:700;margin-bottom:8px;">⏳ ${name} 冷却中</div>
+                <div style="font-size:48px;font-weight:700;color:#ff9800;" id="pkCooldownNum${playerNum}">${seconds}</div>
+                <div style="font-size:14px;color:#ccc;">秒后恢复作答</div>
+            `;
+
+            mapContainer.style.position = 'relative';
+            mapContainer.appendChild(overlay);
+
+            // 倒计时更新
+            const countdownInterval = setInterval(() => {
+                const remain = Math.ceil((player.cooldownEndTime - Date.now()) / 1000);
+                const numEl = overlay.querySelector(`#pkCooldownNum${playerNum}`);
+                if (numEl) numEl.textContent = Math.max(0, remain);
+                if (remain <= 0) {
+                    clearInterval(countdownInterval);
+                    overlay.remove();
+                    showToast(name + ' 冷却结束，可以继续作答', 'success');
+                }
+            }, 200);
         }
 
         function showComparison() {
@@ -2036,22 +2188,23 @@
             if (els.viewResultBtn) els.viewResultBtn.style.display = '';
 
             const name = state.challenge.playerName || '挑战者';
-            document.getElementById('resultTitle').textContent = '🎉 ' + name + '，闯关成功！';
-            document.getElementById('resultStars').style.display = 'none';
+            const resultModal = els.resultModal;
+            resultModal.querySelector('#resultTitle').textContent = '🎉 ' + name + '，闯关成功！';
+            resultModal.querySelector('#resultStars').style.display = 'none';
 
-            document.querySelector('.result-stats').innerHTML = `
+            resultModal.querySelector('.result-stats').innerHTML = `
                 <div class="result-stat"><div class="stat-value" id="statScore">0</div><div class="stat-label">总得分</div></div>
                 <div class="result-stat"><div class="stat-value" id="statTime">00:00</div><div class="stat-label">总用时</div></div>
-                <div class="result-stat"><div class="stat-value" id="statLevels">0</div><div class="stat-label">闯过关卡</div></div>
-                <div class="result-stat"><div class="stat-value" id="statTotalLevels">0</div><div class="stat-label">总关卡数</div></div>
+                <div class="result-stat"><div class="stat-value" id="statCorrect">0</div><div class="stat-label">正确数</div></div>
+                <div class="result-stat"><div class="stat-value" id="statWrong">0</div><div class="stat-label">错误数</div></div>
             `;
 
-            document.getElementById('statScore').textContent = state.challenge.totalScore;
-            document.getElementById('statTime').textContent = formatTime(state.challenge.totalTimer);
-            document.getElementById('statLevels').textContent = state.challenge.totalLevels;
-            document.getElementById('statTotalLevels').textContent = state.challenge.totalLevels;
+            resultModal.querySelector('#statScore').textContent = state.challenge.totalScore;
+            resultModal.querySelector('#statTime').textContent = formatTime(state.challenge.totalTimer);
+            resultModal.querySelector('#statCorrect').textContent = state.challenge.totalCorrectCount;
+            resultModal.querySelector('#statWrong').textContent = state.challenge.totalWrongCount;
 
-            els.resultModal.classList.add('active');
+            resultModal.classList.add('active');
         }
 
         function showChallengeFail() {
@@ -2060,25 +2213,29 @@
 
             const name = state.challenge.playerName || '挑战者';
             const level = state.challenge.currentLevelIdx + 1;
-            const question = state.challenge.currentQuestionIdx + 1;
             const passedLevels = state.challenge.currentLevelIdx;
+            const resultModal = els.resultModal;
 
-            document.getElementById('resultTitle').textContent = '💔 ' + name + '，闯关失败';
-            document.getElementById('resultStars').style.display = 'none';
+            resultModal.querySelector('#resultTitle').textContent = '💔 ' + name + '，闯关失败';
+            resultModal.querySelector('#resultStars').style.display = 'none';
 
-            document.querySelector('.result-stats').innerHTML = `
+            resultModal.querySelector('.result-stats').innerHTML = `
                 <div class="result-stat"><div class="stat-value" id="statFailLevel">0</div><div class="stat-label">失败关卡</div></div>
-                <div class="result-stat"><div class="stat-value" id="statFailQuestion">0</div><div class="stat-label">失败题号</div></div>
                 <div class="result-stat"><div class="stat-value" id="statPassed">0</div><div class="stat-label">已通过关</div></div>
+                <div class="result-stat"><div class="stat-value" id="statScore">0</div><div class="stat-label">总得分</div></div>
                 <div class="result-stat"><div class="stat-value" id="statTotalTime">00:00</div><div class="stat-label">总用时</div></div>
+                <div class="result-stat"><div class="stat-value" id="statCorrect">0</div><div class="stat-label">正确数</div></div>
+                <div class="result-stat"><div class="stat-value" id="statWrong">0</div><div class="stat-label">错误数</div></div>
             `;
 
-            document.getElementById('statFailLevel').textContent = level;
-            document.getElementById('statFailQuestion').textContent = question;
-            document.getElementById('statPassed').textContent = passedLevels;
-            document.getElementById('statTotalTime').textContent = formatTime(state.challenge.totalTimer);
+            resultModal.querySelector('#statFailLevel').textContent = level;
+            resultModal.querySelector('#statPassed').textContent = passedLevels;
+            resultModal.querySelector('#statScore').textContent = state.challenge.totalScore;
+            resultModal.querySelector('#statTotalTime').textContent = formatTime(state.challenge.totalTimer);
+            resultModal.querySelector('#statCorrect').textContent = state.challenge.totalCorrectCount;
+            resultModal.querySelector('#statWrong').textContent = state.challenge.totalWrongCount;
 
-            els.resultModal.classList.add('active');
+            resultModal.classList.add('active');
         }
 
         /**
@@ -2109,6 +2266,11 @@
             els.labelList.addEventListener('pointerdown', onPointerDown);
         }
 
+        /**
+         * 单人模式拖拽开始
+         * 核心优化：不再创建克隆元素，直接提升原标签为 fixed 并跟随指针移动，
+         * 配合 requestAnimationFrame 将 transform 更新同步到屏幕刷新帧，消除延迟感。
+         */
         function onPointerDown(e) {
             if (!state.isPlaying && state.mode !== 'editor') return;
             const label = e.target.closest('.drag-label');
@@ -2123,35 +2285,59 @@
             state.draggedItem = item;
             label.classList.add('dragging');
 
-            // 创建浮动拖拽元素
+            // 记录原标签在视口中的精确位置和尺寸
             const rect = label.getBoundingClientRect();
-            const dragEl = document.createElement('div');
-            dragEl.className = 'drag-label dragging';
-            dragEl.textContent = label.dataset.name;
-            dragEl.style.position = 'fixed';
-            dragEl.style.left = rect.left + 'px';
-            dragEl.style.top = rect.top + 'px';
-            dragEl.style.width = rect.width + 'px';
-            dragEl.style.zIndex = 2000;
-            dragEl.style.pointerEvents = 'none';
-            dragEl.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
-            document.body.appendChild(dragEl);
-            state.dragEl = dragEl;
+            const startX = e.clientX;
+            const startY = e.clientY;
+            let pendingX = startX;
+            let pendingY = startY;
+            let rafId = null;
 
-            // 记录偏移
-            const offsetX = e.clientX - rect.left;
-            const offsetY = e.clientY - rect.top;
+            // 直接提升原标签为 fixed，脱离文档流，无需创建克隆元素
+            label.style.position = 'fixed';
+            label.style.left = rect.left + 'px';
+            label.style.top = rect.top + 'px';
+            label.style.width = rect.width + 'px';
+            label.style.zIndex = '2000';
+            label.style.transition = 'none';
+            label.style.pointerEvents = 'none';
+            label.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+
+            // 使用 requestAnimationFrame 批量更新 transform，确保与屏幕刷新率同步
+            function updateTransform() {
+                rafId = null;
+                const dx = pendingX - startX;
+                const dy = pendingY - startY;
+                label.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+            }
 
             function onMove(ev) {
-                dragEl.style.left = (ev.clientX - offsetX) + 'px';
-                dragEl.style.top = (ev.clientY - offsetY) + 'px';
+                pendingX = ev.clientX;
+                pendingY = ev.clientY;
+                if (!rafId) {
+                    rafId = requestAnimationFrame(updateTransform);
+                }
             }
 
             function onUp(ev) {
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
                 document.removeEventListener('pointermove', onMove);
                 document.removeEventListener('pointerup', onUp);
                 label.classList.remove('dragging');
-                dragEl.remove();
+
+                // 恢复标签原始样式
+                label.style.position = '';
+                label.style.left = '';
+                label.style.top = '';
+                label.style.width = '';
+                label.style.zIndex = '';
+                label.style.transform = '';
+                label.style.transition = '';
+                label.style.pointerEvents = '';
+                label.style.boxShadow = '';
                 state.dragEl = null;
 
                 handleDrop(ev.clientX, ev.clientY, item, label);
@@ -2162,6 +2348,9 @@
         }
 
         function handleDrop(clientX, clientY, item, labelEl) {
+            // 游戏已停止（如倒计时结束）时忽略本次放置
+            if (!state.isPlaying) return;
+
             // 判断落点是否在地图容器内
             const containerRect = els.mapContainer.getBoundingClientRect();
             if (
@@ -2174,8 +2363,8 @@
 
             // 转换为 SVG 坐标
             const svgPos = state.mapEngine.screenToSvg(clientX, clientY);
-            // 点和线型判定范围放大 1.5 倍，边界类型使用多边形内判定
-            const dropRadius = (item.dropRadius || 50) * 1.5;
+            // 点和线型判定范围放大 2.5 倍，边界类型使用多边形内判定
+            const dropRadius = (item.dropRadius || 50) * 2.5;
 
             // 计算释放位置与目标的最短距离
             let dist = Infinity;
@@ -2278,9 +2467,10 @@
             const levelIdForScore = item.targetLevel || state.level;
             const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === levelIdForScore)?.score || { correct: 10, wrong: -5, hint: -3 };
 
-            // 闯关模式：累计得分
+            // 闯关模式：累计得分和正确数
             if (state.mode === 'challenge' && state.challenge.active) {
                 state.challenge.totalScore += scoreCfg.correct;
+                state.challenge.totalCorrectCount++;
                 state.challenge.currentQuestionIdx++;
             }
 
@@ -2349,9 +2539,12 @@
                 if (state.mode === 'challenge' && state.challenge.active) {
                     // 关卡通过，短暂延迟后进入下一关
                     setTimeout(() => {
+                        // 倒计时结束或游戏已停止时，不再进入下一关
+                        if (!state.isPlaying || !state.challenge.active) return;
                         state.challenge.hintsAvailable++;
                         showToast('第 ' + (state.challenge.currentLevelIdx + 1) + ' 关通过！获得 1 次提示', 'success', 1500);
                         setTimeout(() => {
+                            if (!state.isPlaying || !state.challenge.active) return;
                             startChallengeLevel(state.challenge.currentLevelIdx + 1);
                         }, 1500);
                     }, 600);
@@ -2381,10 +2574,14 @@
                 showToast(name + '答错，换对手！', 'error');
                 switchTurn();
             } else if (state.mode === 'challenge' && state.challenge.active) {
-                // 闯关模式：答错即失败
-                showFeedbackBadge(rect.left + rect.width / 2, rect.top, '失败！', 'wrong');
-                showToast('答错了，闯关失败！', 'error');
-                endChallenge(false);
+                // 闯关模式：答错扣分并继续，不再立即结束
+                state.challenge.totalWrongCount++;
+                state.wrongCount++;
+                const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level)?.score || { wrong: -5 };
+                state.challenge.totalScore = Math.max(0, state.challenge.totalScore + scoreCfg.wrong);
+                showFeedbackBadge(rect.left + rect.width / 2, rect.top, scoreCfg.wrong + '', 'wrong');
+                showToast('答错了，继续挑战！', 'error');
+                updateUI();
             } else {
                 const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level).score;
                 state.score = Math.max(0, state.score + scoreCfg.wrong);
@@ -2409,6 +2606,10 @@
             }
         }
 
+        /**
+         * PK 模式拖拽开始
+         * 同样采用直接提升原标签的方案，不再创建克隆元素，配合 rAF 同步刷新。
+         */
         function onPointerDownDual(e) {
             if (!state.isPlaying) return;
             const label = e.target.closest('.drag-label');
@@ -2427,42 +2628,74 @@
             if (player.finished) return;
             if (player.placedIds.has(itemId)) return;
 
+            // 检查冷却时间
+            if (player.cooldownEndTime > Date.now()) {
+                const remainMs = player.cooldownEndTime - Date.now();
+                showToast(player.name + ' 冷却中，剩余 ' + Math.ceil(remainMs / 1000) + ' 秒', 'error');
+                return;
+            }
+
             label.classList.add('dragging');
 
             const rect = label.getBoundingClientRect();
-            const dragEl = document.createElement('div');
-            dragEl.className = 'drag-label dragging';
-            dragEl.textContent = label.dataset.name;
-            dragEl.style.position = 'fixed';
-            dragEl.style.left = rect.left + 'px';
-            dragEl.style.top = rect.top + 'px';
-            dragEl.style.width = rect.width + 'px';
-            dragEl.style.zIndex = 2000;
-            dragEl.style.pointerEvents = 'none';
-            dragEl.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
-            document.body.appendChild(dragEl);
-
-            const offsetX = e.clientX - rect.left;
-            const offsetY = e.clientY - rect.top;
+            const startX = e.clientX;
+            const startY = e.clientY;
+            let pendingX = startX;
+            let pendingY = startY;
+            let rafId = null;
             const pointerId = e.pointerId;
+
+            // 直接提升原标签为 fixed，脱离文档流
+            label.style.position = 'fixed';
+            label.style.left = rect.left + 'px';
+            label.style.top = rect.top + 'px';
+            label.style.width = rect.width + 'px';
+            label.style.zIndex = '2000';
+            label.style.transition = 'none';
+            label.style.pointerEvents = 'none';
+            label.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
 
             // 存储活跃拖拽状态，支持多指针同时拖拽
             state.activeDrags.set(pointerId, {
-                item, dragEl, label, playerNum, offsetX, offsetY
+                item, label, playerNum, startX, startY
             });
+
+            function updateTransform() {
+                rafId = null;
+                const dx = pendingX - startX;
+                const dy = pendingY - startY;
+                label.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+            }
 
             function onMove(ev) {
                 if (ev.pointerId !== pointerId) return;
-                dragEl.style.left = (ev.clientX - offsetX) + 'px';
-                dragEl.style.top = (ev.clientY - offsetY) + 'px';
+                pendingX = ev.clientX;
+                pendingY = ev.clientY;
+                if (!rafId) {
+                    rafId = requestAnimationFrame(updateTransform);
+                }
             }
 
             function onUp(ev) {
                 if (ev.pointerId !== pointerId) return;
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
                 document.removeEventListener('pointermove', onMove);
                 document.removeEventListener('pointerup', onUp);
                 label.classList.remove('dragging');
-                dragEl.remove();
+
+                // 恢复标签原始样式
+                label.style.position = '';
+                label.style.left = '';
+                label.style.top = '';
+                label.style.width = '';
+                label.style.zIndex = '';
+                label.style.transform = '';
+                label.style.transition = '';
+                label.style.pointerEvents = '';
+                label.style.boxShadow = '';
                 state.activeDrags.delete(pointerId);
 
                 handleDropDual(ev.clientX, ev.clientY, item, label, playerNum);
@@ -2473,6 +2706,9 @@
         }
 
         function handleDropDual(clientX, clientY, item, labelEl, playerNum) {
+            // 游戏已停止（如倒计时结束）时忽略本次放置
+            if (!state.isPlaying) return;
+
             const mapContainer = playerNum === 1 ? els.mapContainer1 : els.mapContainer2;
             const mapSvg = playerNum === 1 ? els.mapSvg1 : els.mapSvg2;
             const mapEngine = playerNum === 1 ? state.mapEngine1 : state.mapEngine2;
@@ -2487,7 +2723,7 @@
             }
 
             const svgPos = mapEngine.screenToSvg(clientX, clientY);
-            const dropRadius = (item.dropRadius || 50) * 1.5;
+            const dropRadius = (item.dropRadius || 50) * 2.5;
 
             let dist = Infinity;
             let targetPos = null;
@@ -2544,6 +2780,7 @@
 
             player.placedIds.add(item.id);
             player.correctCount++;
+            player.consecutiveWrongCount = 0; // 答对重置连续错误计数
             const levelIdForScore = item.targetLevel || state.level;
             const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === levelIdForScore)?.score || { correct: 10, wrong: -5, hint: -3 };
             player.score += scoreCfg.correct;
@@ -2607,9 +2844,14 @@
             }
         }
 
+        /**
+         * PK模式答错处理
+         * 连续答错3题后触发3秒冷却时间
+         */
         function handleWrongDual(labelEl, playerNum) {
             const player = playerNum === 1 ? state.pk.player1 : state.pk.player2;
             player.wrongCount++;
+            player.consecutiveWrongCount++;
             labelEl.classList.add('shake');
             setTimeout(() => labelEl.classList.remove('shake'), 400);
 
@@ -2617,7 +2859,16 @@
             const scoreCfg = state.gameConfig.terrain.levels.find(l => l.id === state.level)?.score || { wrong: -5 };
             player.score = Math.max(0, player.score + scoreCfg.wrong);
             showFeedbackBadge(rect.left + rect.width / 2, rect.top, scoreCfg.wrong + '', 'wrong');
-            showToast(player.name + ' 答错了，再试一次', 'error');
+
+            // 检查是否触发冷却
+            if (player.consecutiveWrongCount >= 3) {
+                player.cooldownEndTime = Date.now() + 3000;
+                player.consecutiveWrongCount = 0;
+                showToast(player.name + ' 连续答错3题，冷却3秒！', 'error');
+                showPkCooldownOverlay(playerNum, 3);
+            } else {
+                showToast(player.name + ' 答错了，再试一次', 'error');
+            }
             updateDualCounts();
         }
 

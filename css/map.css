@@ -119,6 +119,7 @@
     transition: all 0.2s ease;
     text-align: center;
     color: var(--color-text);
+    will-change: transform;
 }
 
 .drag-label:hover {
@@ -129,6 +130,7 @@
 .drag-label.dragging {
     opacity: 0.6;
     cursor: grabbing;
+    transition: none !important;
 }
 
 .drag-label.placed {
@@ -843,6 +845,7 @@
     border: 1px solid #e0e0e0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     transition: all 0.15s ease;
+    will-change: transform;
 }
 
 .dual-panel .drag-label:hover {
