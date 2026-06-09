@@ -15,23 +15,15 @@
         <a class="home-link" href="index.html">← 返回首页</a>
         <span class="toolbar-title">中国的地形</span>
         <button class="layer-drawer-toggle" id="layerDrawerToggle">🗺️ 图层</button>
-        <label class="layer-toggle" data-layer="mountains" id="layerToggleMountains" style="display:none;">
-            <input type="checkbox"> 山脉标记
-        </label>
-        <label class="layer-toggle" data-layer="regions" id="layerToggleRegions" style="display:none;">
-            <input type="checkbox"> 地形区标注
-        </label>
-        <label class="layer-toggle" data-layer="overlayMountain" id="layerToggleOverlayMountain">
+        <!-- 山脉图、地形图、政区轮廓图暂时隐藏（保留 DOM 以备后用，功能已集成到右侧抽屉） -->
+        <label class="layer-toggle" data-layer="overlayMountain" id="layerToggleOverlayMountain" style="display:none;">
             <input type="checkbox"> 山脉图
         </label>
-        <label class="layer-toggle" data-layer="overlayRegion" id="layerToggleOverlayRegion">
+        <label class="layer-toggle" data-layer="overlayRegion" id="layerToggleOverlayRegion" style="display:none;">
             <input type="checkbox"> 地形图
         </label>
-        <label class="layer-toggle" data-layer="overlayAdmin" id="layerToggleOverlayAdmin">
+        <label class="layer-toggle" data-layer="overlayAdmin" id="layerToggleOverlayAdmin" style="display:none;">
             <input type="checkbox"> 政区轮廓图
-        </label>
-        <label class="layer-toggle" data-layer="dropZones">
-            <input type="checkbox"> 目标提示
         </label>
         <div class="toolbar-spacer"></div>
         <div class="mode-switch" id="modeSwitch">
@@ -239,7 +231,7 @@
     <div class="modal-overlay" id="descModal">
         <div class="modal-content" style="max-width:480px;">
             <div class="modal-title" id="descTitle"></div>
-            <div class="modal-body" id="descBody"></div>
+            <div class="modal-body" id="descBody" style="white-space: pre-line;"></div>
             <div class="modal-actions">
                 <button class="btn btn-primary" id="descCloseBtn">知道了</button>
             </div>
@@ -920,18 +912,39 @@
                         return;
                     }
 
+                    // 如果正在游戏中，切换标签则放弃此次游戏内容，直接进入目标模式的开始界面
+                    const isGaming = state.isPlaying || state.challenge.active || state.pk.active;
+                    if (isGaming) {
+                        stopGame();
+                        // 清理可能残留的遮罩和弹窗
+                        document.querySelectorAll('.challenge-result-overlay, .player-result-overlay, .pk-cooldown-overlay').forEach(el => el.remove());
+                        document.getElementById('comparisonModal')?.classList.remove('active');
+                        document.getElementById('pkForceEndBanner')?.classList.remove('active');
+                        // 重置双屏相关UI
+                        els.dualScreenWrapper.style.display = 'none';
+                        document.body.classList.remove('dual-screen-mode');
+                        els.mapContainer.style.display = '';
+                        els.sidebar.style.display = 'none';
+                    }
+
                     els.modeSwitch.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     state.mode = mode;
+
                     if (mode === 'pk') {
+                        if (isGaming) {
+                            const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
+                            setupLevel(levelToRestore);
+                        }
                         enterPkMode();
                     } else if (mode === 'challenge') {
                         enterChallengeMode();
                     } else {
                         exitPkMode();
                         exitChallengeMode();
+                        const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
+                        setupLevel(levelToRestore);
                     }
-                    if (state.isPlaying) restartGame();
                 });
             });
         }
@@ -1006,6 +1019,13 @@
                 } else if (state.layerManager) {
                     state.layerManager.toggle(layerName, checkbox.checked);
                 }
+
+                // 目标提示开关变化时同步刷新提示按钮可用状态
+                // 与原顶部"目标提示"开关行为保持一致：单人/双人PK模式下开启目标提示才能使用提示按钮；
+                // 闯关模式不受此联动影响（闯关模式的提示由通关后累积的 hintsAvailable 控制）
+                if (layerName === 'dropZones') {
+                    updateUI();
+                }
             });
 
             // 初始化抽屉面板内各开关的显示状态
@@ -1037,9 +1057,7 @@
             document.getElementById('nameInputSingle').style.display = 'none';
             document.getElementById('nameInputPk').style.display = 'flex';
             document.getElementById('challengeInfo').style.display = 'none';
-            document.querySelectorAll('.layer-toggle[data-layer="overlayMountain"], .layer-toggle[data-layer="overlayRegion"], .layer-toggle[data-layer="overlayAdmin"], .layer-toggle[data-layer="dropZones"]').forEach(el => {
-                el.style.display = 'none';
-            });
+            // 顶部 山脉图/地形图/政区轮廓图 开关已被整体隐藏（功能迁移到右侧抽屉），无需在此再次切换显隐
             resetPkState();
         }
 
@@ -1053,9 +1071,7 @@
             document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
             document.getElementById('nameInputSingle').style.display = '';
             document.getElementById('nameInputPk').style.display = 'none';
-            document.querySelectorAll('.layer-toggle[data-layer="overlayMountain"], .layer-toggle[data-layer="overlayRegion"], .layer-toggle[data-layer="overlayAdmin"], .layer-toggle[data-layer="dropZones"]').forEach(el => {
-                el.style.display = '';
-            });
+            // 顶部 山脉图/地形图/政区轮廓图 开关已被整体隐藏（功能迁移到右侧抽屉），无需在此恢复显示
             clearInterval(state.pk.timerInterval);
             clearInterval(state.pk.forceEndTimer);
             document.body.classList.remove('dual-screen-mode');
@@ -1155,15 +1171,7 @@
             // 恢复单人模式的开始界面文案
             document.getElementById('startTitle').textContent = '选择关卡';
             document.getElementById('startDesc').textContent = '请选择要挑战的关卡类型';
-            const dropZonesToggle = document.querySelector('.layer-toggle[data-layer="dropZones"]');
-            if (dropZonesToggle) dropZonesToggle.style.display = '';
-            // 恢复叠加图片开关显示
-            const layerToggleOverlayMountain = document.getElementById('layerToggleOverlayMountain');
-            const layerToggleOverlayRegion = document.getElementById('layerToggleOverlayRegion');
-            const layerToggleOverlayAdmin = document.getElementById('layerToggleOverlayAdmin');
-            if (layerToggleOverlayMountain) layerToggleOverlayMountain.style.display = '';
-            if (layerToggleOverlayRegion) layerToggleOverlayRegion.style.display = '';
-            if (layerToggleOverlayAdmin) layerToggleOverlayAdmin.style.display = '';
+            // 顶部 山脉图/地形图/政区轮廓图/目标提示 开关已被整体移除或隐藏（功能迁移到右侧抽屉），无需在此恢复显示
             // 恢复单人模式的地图状态和开关显示，保持和单人/双人模式一样的逻辑
             const levelToRestore = (state.level === 'challenge' || !state.level) ? 'mountains' : state.level;
             setupLevel(levelToRestore);
@@ -1308,16 +1316,8 @@
             state.items = dataManager.load(levelId);
             console.log('[setupLevel] levelId=', levelId, 'items.length=', state.items.length);
 
-            // 根据关卡动态显示对应开关，并重置所有动态图层为关闭
-            const layerToggleMountains = document.getElementById('layerToggleMountains');
-            const layerToggleRegions = document.getElementById('layerToggleRegions');
-            if (levelId === 'mountains') {
-                layerToggleMountains.style.display = '';
-                layerToggleRegions.style.display = 'none';
-            } else {
-                layerToggleMountains.style.display = 'none';
-                layerToggleRegions.style.display = '';
-            }
+            // 顶部工具栏的 山脉标记/地形区标注 开关已移除，统一由右侧抽屉控制，无需在此动态显隐。
+            // 重置所有动态图层为关闭
             state.layerManager.setStates({ base: true, mountains: false, regions: false, dropZones: false });
 
             // 重置叠加图片开关和可见性
@@ -3082,6 +3082,18 @@
             els.modeSwitch.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             document.getElementById('editorBtn').classList.add('active');
 
+            // 坐标采集模式下隐藏抽屉中的"练习辅助"分组（目标提示、山脉标记、地形区标注）
+            // 抽屉 DOM 在主脚本之后，需等待 DOM 就绪后再隐藏，否则 getElementById 返回 null
+            function hidePracticeAids() {
+                const practiceAids = document.getElementById('layerGroupPracticeAids');
+                if (practiceAids) practiceAids.style.display = 'none';
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hidePracticeAids, { once: true });
+            } else {
+                hidePracticeAids();
+            }
+
             // 显示所有图层方便采集
             state.layerManager.setStates({ base: true, mountains: false, regions: false, lines: false, dropZones: false, editor: true });
 
@@ -4206,17 +4218,17 @@
                     </label>
                 </div>
             </div>
-            <div class="layer-group">
+            <div class="layer-group" id="layerGroupPracticeAids">
                 <div class="layer-group-title">练习辅助</div>
                 <label class="layer-drawer-item" data-layer="dropZones">
                     <input type="checkbox">
                     <span class="item-label">目标提示</span>
                 </label>
-                <label class="layer-drawer-item" data-layer="mountains" id="drawerToggleMountains" style="display:none;">
+                <label class="layer-drawer-item" data-layer="mountains" id="drawerToggleMountains">
                     <input type="checkbox">
                     <span class="item-label">山脉标记</span>
                 </label>
-                <label class="layer-drawer-item" data-layer="regions" id="drawerToggleRegions" style="display:none;">
+                <label class="layer-drawer-item" data-layer="regions" id="drawerToggleRegions">
                     <input type="checkbox">
                     <span class="item-label">地形区标注</span>
                 </label>
