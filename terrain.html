@@ -3074,6 +3074,7 @@
 
         function enterEditorMode() {
             state.mode = 'editor';
+            document.body.classList.add('editor-mode');
             els.editorPanel.style.display = '';
             els.statusBar.style.display = 'none';
             els.sidebar.style.display = ''; // 显示待标注栏，实时同步采集点

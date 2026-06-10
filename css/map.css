@@ -276,7 +276,7 @@
 }
 
 .editor-label {
-    font-size: 45px;
+    font-size: 12px;
     fill: #e53935;
     font-weight: 700;
     pointer-events: none;
@@ -284,6 +284,22 @@
 
 .editor-drop-zone {
     pointer-events: none;
+}
+
+/* 坐标采集模式：山脉/地形区/线型标记复用游戏样式渲染，但字体需要还原成原来的小尺寸，
+   避免被闯关模式放大的字号影响到采集预览效果。
+   用 !important 确保覆盖 .mountain-label/.region-label/.line-label 的默认大字体规则。 */
+body.editor-mode .mountain-label {
+    font-size: 13px !important;
+    fill: var(--color-accent) !important;
+}
+body.editor-mode .region-label {
+    font-size: 14px !important;
+    fill: var(--color-primary) !important;
+}
+body.editor-mode .line-label {
+    font-size: 14px !important;
+    fill: #e53935 !important;
 }
 
 /* ============================================================
