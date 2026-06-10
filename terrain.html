@@ -619,14 +619,12 @@
             const handleContainer = els.handleContainer;
             const containerRect = container.getBoundingClientRect();
 
-            // 以 base-map-img 的 object-fit:contain 实际可见区域为锚点
-            // 无论是否有画布 padding，底图可见区域都是叠加图的唯一参照
+            // 以容器可视区域为锚点，使用 SVG viewBox 宽高比（与底图渲染一致）
+            // 底图已由 SVG 内部 <image> 元素渲染，宽高比固定为 MAP_CONFIG 比例
             const baseImg = document.getElementById('baseMapImg');
-            const imgRect = baseImg.getBoundingClientRect();
-            // 使用实际图片的自然尺寸比例，以适配不同分辨率的底图
-            const imgAspect = (baseImg.naturalWidth && baseImg.naturalHeight)
-                ? baseImg.naturalWidth / baseImg.naturalHeight
-                : MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
+            const imgRect = containerRect; // 隐藏 img 后直接使用容器尺寸
+            // 使用 SVG viewBox 的固定比例，与 SVG preserveAspectRatio 保持一致
+            const imgAspect = MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
             const elAspect = imgRect.width / imgRect.height;
             let visX, visY, visW, visH;
             if (elAspect > imgAspect) {
@@ -671,10 +669,9 @@
                 const containerRect = container.getBoundingClientRect();
                 const baseImg = document.getElementById('baseMapImg' + idx);
                 if (!baseImg) return;
-                const imgRect = baseImg.getBoundingClientRect();
-                const imgAspect = (baseImg.naturalWidth && baseImg.naturalHeight)
-                    ? baseImg.naturalWidth / baseImg.naturalHeight
-                    : MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
+                // 底图已隐藏，使用容器尺寸和 SVG viewBox 固定宽高比
+                const imgRect = containerRect;
+                const imgAspect = MAP_CONFIG.baseWidth / MAP_CONFIG.baseHeight;
                 const elAspect = imgRect.width / imgRect.height;
                 let visX, visY, visW, visH;
                 if (elAspect > imgAspect) {

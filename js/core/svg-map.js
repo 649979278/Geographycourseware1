@@ -55,6 +55,41 @@ function initSvgMap(svgSelector) {
 
     svg.insertBefore(defs, svg.firstChild);
 
+    // ---- 在 SVG 内部嵌入底图 <image>，与标记共享同一坐标系 ----
+    // 解决：外部 <img> 使用 object-fit:contain（基于图片自然宽高比 960:720=1.333），
+    // 而 SVG 使用 preserveAspectRatio（基于 viewBox 宽高比 2981:2180=1.367），
+    // 两者比例不一致导致底图与 SVG 坐标系统不对齐（PK 双屏模式右屏尤为明显）。
+    // 将底图放入 SVG 后，图片与标记使用完全相同的 viewBox + preserveAspectRatio，
+    // 从根本上消除对齐偏差。
+    var svgImageEl = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    svgImageEl.setAttribute('x', 0);
+    svgImageEl.setAttribute('y', 0);
+    svgImageEl.setAttribute('width', MAP_CONFIG.baseWidth);
+    svgImageEl.setAttribute('height', MAP_CONFIG.baseHeight);
+    svgImageEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    // 从对应的 <img> 元素读取初始 src，作为 SVG <image> 的 href
+    var imgElId = svg.id.replace('mapSvg', 'baseMapImg');
+    var imgEl = document.getElementById(imgElId);
+    if (imgEl) {
+        svgImageEl.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', imgEl.src);
+        svgImageEl.setAttribute('href', imgEl.getAttribute('src') || imgEl.src);
+        // 监听 <img> 的 src 属性变化（图层切换时），自动同步到 SVG <image>
+        var _observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                if (m.attributeName === 'src') {
+                    var newSrc = imgEl.getAttribute('src');
+                    if (newSrc) {
+                        svgImageEl.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', newSrc);
+                        svgImageEl.setAttribute('href', newSrc);
+                    }
+                }
+            });
+        });
+        _observer.observe(imgEl, { attributes: true, attributeFilter: ['src'] });
+    }
+    // 将底图 <image> 插入到 defs 之后、图层组之前，确保它处于最底层
+    svg.appendChild(svgImageEl);
+
     // 创建图层组（按渲染顺序）
     const layers = {
         base: createGroup(svg, 'base-layer'),

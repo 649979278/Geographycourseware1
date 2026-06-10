@@ -331,7 +331,7 @@ body.editor-mode .line-label {
 
 .line-answer {
     stroke: #4caf50;
-    stroke-width: 4;
+    stroke-width: 16;
     fill: none;
 }
 
@@ -381,14 +381,8 @@ body.editor-mode .line-label {
    ============================================================ */
 
 .base-map-img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    pointer-events: none;
-    z-index: 1;
+    /* 底图已由 SVG 内部 <image> 元素渲染，外部 <img> 仅保留用于预加载和 src 同步 */
+    display: none;
 }
 
 .overlay-container {

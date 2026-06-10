@@ -1,0 +1,4 @@
+[     114ms] [LOG] [setupLevel] levelId= mountains items.length= 25 @ http://localhost:3000/terrain.html:1313
+[     328ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[  231025ms] [LOG] [setupLevel] levelId= mountains items.length= 25 @ http://localhost:3000/terrain.html:1313
+[  231043ms] [LOG] [setupLevel] levelId= mountains items.length= 25 @ http://localhost:3000/terrain.html:1313
