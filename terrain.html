@@ -1766,6 +1766,7 @@
             } else {
                 els.sidebar.style.display = '';
                 els.mapContainer.style.display = '';
+                if (els.labelList) els.labelList.style.pointerEvents = '';
                 state.timerInterval = setInterval(() => {
                     state.timer++;
                     els.timerDisplay.textContent = formatTime(state.timer);
@@ -1802,6 +1803,7 @@
             els.levelName.textContent = '第 ' + (levelIdx + 1) + ' / ' + state.challenge.totalLevels + ' 关';
             els.startOverlay.style.display = 'none';
             els.sidebar.style.display = '';
+            if (els.labelList) els.labelList.style.pointerEvents = '';
             state.isPlaying = true;
             els.timerDisplay.textContent = formatTime(state.timer);
 
